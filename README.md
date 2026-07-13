@@ -4,6 +4,8 @@ An uncompromising dark Vue 3 component library with an industrial-underground
 visual language. The public package has no UI runtime dependencies: focus,
 overlays, positioning, keyboard behavior, and icons are implemented locally.
 
+**[Explore the live components on GitHub Pages →](https://theanonymous.github.io/KinkyVibes/)**
+
 > The project is pre-1.0 while its package, SSR, Nuxt, accessibility, and
 > browser matrices are being proven. The first fully verified release will be
 > `1.0.0`.
