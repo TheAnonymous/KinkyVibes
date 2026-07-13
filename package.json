@@ -18,6 +18,7 @@
     "build:ui": "npm run build -w @kinky-vibes/ui",
     "dev": "npm run dev -w @kinky-vibes/docs",
     "lint": "eslint . --max-warnings=0",
+    "pretypecheck": "npm run build:ui",
     "typecheck": "npm run typecheck -w @kinky-vibes/ui && npm run typecheck -w @kinky-vibes/docs",
     "test": "npm run test:unit && npm run test:ssr",
     "test:unit": "vitest run",
