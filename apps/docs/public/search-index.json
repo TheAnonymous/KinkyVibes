@@ -1,0 +1,257 @@
+[
+  {
+    "title": "Introduction",
+    "path": "/",
+    "text": "Industrial-underground Vue 3 design system"
+  },
+  {
+    "title": "Installation",
+    "path": "/installation",
+    "text": "Install plugin named imports styles package"
+  },
+  {
+    "title": "Tokens",
+    "path": "/tokens",
+    "text": "CSS variables colors spacing typography customization"
+  },
+  {
+    "title": "Components",
+    "path": "/components",
+    "text": "All component categories and public APIs"
+  },
+  {
+    "title": "SSR & Nuxt",
+    "path": "/guides/ssr",
+    "text": "Server rendering hydration Nuxt imports teleports"
+  },
+  {
+    "title": "Customization",
+    "path": "/guides/customization",
+    "text": "Token overrides stable classes dark theme"
+  },
+  {
+    "title": "Accessibility",
+    "path": "/accessibility",
+    "text": "Keyboard screen reader checklist best effort axe"
+  },
+  {
+    "title": "KvProvider",
+    "path": "/components/provider",
+    "text": "Foundations Establishes tokens, typography, grain, and a local override boundary. tokens Record<string, string> grain boolean "
+  },
+  {
+    "title": "KvContainer",
+    "path": "/components/container",
+    "text": "Foundations Constrains page content to a readable responsive measure. size 'sm' | 'md' | 'lg' | 'full' "
+  },
+  {
+    "title": "KvStack",
+    "path": "/components/stack",
+    "text": "Foundations Arranges children vertically with tokenized spacing. gap 'xs' | 'sm' | 'md' | 'lg' | 'xl' "
+  },
+  {
+    "title": "KvCluster",
+    "path": "/components/cluster",
+    "text": "Foundations Wraps related controls and content on a horizontal axis. justify 'start' | 'center' | 'end' | 'between' "
+  },
+  {
+    "title": "KvGrid",
+    "path": "/components/grid",
+    "text": "Foundations Creates an auto-fitting responsive grid without breakpoint props. min string "
+  },
+  {
+    "title": "KvDivider",
+    "path": "/components/divider",
+    "text": "Foundations Separates regions visually and semantically. orientation 'horizontal' | 'vertical' "
+  },
+  {
+    "title": "KvVisuallyHidden",
+    "path": "/components/visually-hidden",
+    "text": "Foundations Keeps accessible text available without visual layout. focusable boolean "
+  },
+  {
+    "title": "KvHeading",
+    "path": "/components/heading",
+    "text": "Foundations Industrial condensed display heading with valid semantic levels. level 1 | 2 | 3 | 4 | 5 | 6 eyebrow string "
+  },
+  {
+    "title": "KvText",
+    "path": "/components/text",
+    "text": "Foundations Body copy with size and tone controls. tone 'default' | 'muted' | 'signal' "
+  },
+  {
+    "title": "KvLink",
+    "path": "/components/link",
+    "text": "Foundations A high-contrast text link with external-link safety. href string external boolean "
+  },
+  {
+    "title": "KvCode",
+    "path": "/components/code",
+    "text": "Foundations Inline or block monospace technical content. block boolean "
+  },
+  {
+    "title": "KvButton",
+    "path": "/components/button",
+    "text": "Actions Primary action with variants, sizes, loading, and slot affordances. size KvSize variant KvVariant loading boolean Enter / Space — activate"
+  },
+  {
+    "title": "KvIconButton",
+    "path": "/components/icon-button",
+    "text": "Actions Square icon-only action that requires an accessible label. label string size KvSize Enter / Space — activate"
+  },
+  {
+    "title": "KvButtonGroup",
+    "path": "/components/button-group",
+    "text": "Actions Labels and groups related actions. label string attached boolean "
+  },
+  {
+    "title": "KvField",
+    "path": "/components/field",
+    "text": "Forms Connects label, description, error, required state, and input IDs automatically. label string description string error string "
+  },
+  {
+    "title": "KvInput",
+    "path": "/components/input",
+    "text": "Forms Textual and native date/time input types with controlled or default state. modelValue varies size KvSize type text | email | password | search | number | date | time | datetime-local | … "
+  },
+  {
+    "title": "KvTextarea",
+    "path": "/components/textarea",
+    "text": "Forms Multiline text entry with consumer-controlled validation. modelValue varies rows number "
+  },
+  {
+    "title": "KvSelect",
+    "path": "/components/select",
+    "text": "Forms Styled semantic native select retaining platform keyboard behavior. modelValue varies options KvSelectOption[] Arrow keys — move Home / End — first or last Enter — commit on supported platforms"
+  },
+  {
+    "title": "KvCombobox",
+    "path": "/components/combobox",
+    "text": "Forms Filterable listbox with complete active-option keyboard handling. modelValue varies options KvComboboxOption[] Arrow Up / Down — move Home / End — first or last Enter — select Escape — close"
+  },
+  {
+    "title": "KvCheckbox",
+    "path": "/components/checkbox",
+    "text": "Forms Boolean or indeterminate choice with label and description. modelValue varies indeterminate boolean Space — toggle"
+  },
+  {
+    "title": "KvRadioGroup",
+    "path": "/components/radio-group",
+    "text": "Forms Named native radio set in a semantic fieldset. modelValue varies options KvSelectOption[] Arrow keys — move and select Space — select"
+  },
+  {
+    "title": "KvSwitch",
+    "path": "/components/switch",
+    "text": "Forms Immediate boolean setting using the switch role. modelValue varies label string Space / Enter — toggle"
+  },
+  {
+    "title": "KvSlider",
+    "path": "/components/slider",
+    "text": "Forms Native range control with signal progress and optional value output. modelValue varies min / max / step number Arrow keys — adjust one step Page Up / Down — larger adjustment Home / End — limits"
+  },
+  {
+    "title": "KvFileInput",
+    "path": "/components/file-input",
+    "text": "Forms Styled native file picker that emits a stable File array. accept string multiple boolean Enter / Space — open system picker"
+  },
+  {
+    "title": "KvTabs",
+    "path": "/components/tabs",
+    "text": "Navigation Automatic-activation tab set with horizontal or vertical orientation. modelValue varies items KvTabItem[] Arrow keys — select adjacent tab Home / End — first or last tab"
+  },
+  {
+    "title": "KvBreadcrumbs",
+    "path": "/components/breadcrumbs",
+    "text": "Navigation Semantic path navigation with a current-page marker. items KvBreadcrumbItem[] "
+  },
+  {
+    "title": "KvPagination",
+    "path": "/components/pagination",
+    "text": "Navigation Controlled or default pagination with bounded page updates. modelValue varies total number pageSize number "
+  },
+  {
+    "title": "KvSteps",
+    "path": "/components/steps",
+    "text": "Navigation Read-only ordered process indicator. items KvStep[] current number | string "
+  },
+  {
+    "title": "KvDropdownMenu",
+    "path": "/components/dropdown-menu",
+    "text": "Navigation Positioned action menu with roving focus and outside handling. open boolean items KvMenuItem[] placement KvPlacement Arrow Up / Down — move Home / End — first or last Enter / Space — invoke Escape — close and restore focus"
+  },
+  {
+    "title": "KvDialog",
+    "path": "/components/dialog",
+    "text": "Overlays Modal surface with focus trap, restoration, Escape, outside handling, and scroll lock. open boolean title string closeOnOutside boolean Tab / Shift+Tab — cycle inside Escape — close and restore focus"
+  },
+  {
+    "title": "KvAlertDialog",
+    "path": "/components/alert-dialog",
+    "text": "Overlays Interruptive confirmation surface with initial cancel focus. open boolean destructive boolean Tab / Shift+Tab — cycle inside Escape — cancel and restore focus"
+  },
+  {
+    "title": "KvDrawer",
+    "path": "/components/drawer",
+    "text": "Overlays Edge-mounted modal panel sharing the dialog focus contract. open boolean side 'left' | 'right' Tab / Shift+Tab — cycle inside Escape — close and restore focus"
+  },
+  {
+    "title": "KvPopover",
+    "path": "/components/popover",
+    "text": "Overlays Non-modal positioned content with flip, shift, outside, and Escape handling. open boolean placement KvPlacement Escape — close and restore focus"
+  },
+  {
+    "title": "KvTooltip",
+    "path": "/components/tooltip",
+    "text": "Overlays Delayed hover/focus description rendered through a safe teleport. text string delay number Focus — show Escape / Blur — hide"
+  },
+  {
+    "title": "KvCard",
+    "path": "/components/card",
+    "text": "Data & Disclosure Steel surface for grouped, optionally interactive content. padding 'none' | 'sm' | 'md' | 'lg' "
+  },
+  {
+    "title": "KvAccordion",
+    "path": "/components/accordion",
+    "text": "Data & Disclosure Single or multi-open disclosure regions using semantic heading buttons. modelValue varies items KvAccordionItem[] multiple boolean Enter / Space — toggle panel"
+  },
+  {
+    "title": "KvTable",
+    "path": "/components/table",
+    "text": "Data & Disclosure Semantic typed table with controlled sorting and row selection; data transforms stay consumer-owned. items T[] columns KvTableColumn<T>[] rowKey keyof T | (item: T) => string | number sort KvSortState selectedKeys (string | number)[] Enter / Space — sort header or toggle checkbox"
+  },
+  {
+    "title": "KvAlert",
+    "path": "/components/alert",
+    "text": "Feedback Inline neutral or status message with optional dismissal. status KvStatus "
+  },
+  {
+    "title": "KvBadge",
+    "path": "/components/badge",
+    "text": "Feedback Compact status or metadata label. status KvStatus dot boolean "
+  },
+  {
+    "title": "KvProgress",
+    "path": "/components/progress",
+    "text": "Feedback Determinate or indeterminate progress with an accessible label. value number | undefined max number "
+  },
+  {
+    "title": "KvSpinner",
+    "path": "/components/spinner",
+    "text": "Feedback Compact mechanical loading indicator with status text. label string size KvSize "
+  },
+  {
+    "title": "KvSkeleton",
+    "path": "/components/skeleton",
+    "text": "Feedback Non-semantic placeholder for nearby loading state. width / height string "
+  },
+  {
+    "title": "KvEmptyState",
+    "path": "/components/empty-state",
+    "text": "Feedback Centered no-content state with icon and action slots. title string description string "
+  },
+  {
+    "title": "KvToastProvider",
+    "path": "/components/toast-provider",
+    "text": "Feedback Provides useKvToast and renders timed, actionable status notifications. placement 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' defaultDuration number Tab — reach actions when present Enter / Space — invoke or dismiss"
+  }
+]

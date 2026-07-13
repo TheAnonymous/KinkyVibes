@@ -1,0 +1,60 @@
+{
+  "name": "kinky-vibes",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Industrial-underground Vue 3 component library and documentation workspace.",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "npm@12.0.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "build": "npm run build -w @kinky-vibes/ui && npm run build -w @kinky-vibes/docs",
+    "build:ui": "npm run build -w @kinky-vibes/ui",
+    "dev": "npm run dev -w @kinky-vibes/docs",
+    "lint": "eslint . --max-warnings=0",
+    "pretypecheck": "npm run build:ui",
+    "typecheck": "npm run typecheck -w @kinky-vibes/ui && npm run typecheck -w @kinky-vibes/docs",
+    "test": "npm run test:unit && npm run test:ssr",
+    "test:unit": "vitest run",
+    "test:watch": "vitest",
+    "test:ssr": "npm run build:ui && tsx scripts/test-ssr.ts && tsx scripts/test-hydration.ts && npx nuxi build fixtures/nuxt-consumer && node scripts/test-nuxt-output.mjs",
+    "test:pack": "node scripts/test-pack.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:update": "playwright test --update-snapshots",
+    "check": "npm run lint && npm run typecheck && npm run test && npm run build && npm run test:pack",
+    "changeset": "changeset",
+    "version-packages": "changeset version",
+    "release": "changeset publish"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@axe-core/playwright": "^4.12.1",
+    "@changesets/changelog-github": "^0.5.2",
+    "@changesets/cli": "^2.31.0",
+    "@playwright/test": "^1.61.1",
+    "@types/node": "^24.10.0",
+    "@typescript-eslint/eslint-plugin": "^8.64.0",
+    "@typescript-eslint/parser": "^8.64.0",
+    "@vitejs/plugin-vue": "^6.0.7",
+    "@vue/server-renderer": "^3.5.39",
+    "@vue/test-utils": "^2.4.11",
+    "eslint": "^10.7.0",
+    "eslint-plugin-vue": "^10.9.2",
+    "globals": "^16.5.0",
+    "happy-dom": "^20.10.6",
+    "nuxt": "^4.4.8",
+    "tsx": "^4.23.1",
+    "typescript": "^6.0.2",
+    "vite": "^8.1.4",
+    "vitest": "^4.1.10",
+    "vue": "^3.5.39",
+    "vue-eslint-parser": "^10.3.0",
+    "vue-tsc": "^3.3.7"
+  }
+}
