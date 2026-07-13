@@ -1,0 +1,20 @@
+{
+  "name": "kinky-vibes-vue-fixture",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "vue-tsc --noEmit"
+  },
+  "dependencies": {
+    "@kinky-vibes/ui": "file:../../packages/ui",
+    "vue": "^3.5.39"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.7",
+    "typescript": "^6.0.2",
+    "vite": "^8.1.4",
+    "vue-tsc": "^3.3.7"
+  }
+}

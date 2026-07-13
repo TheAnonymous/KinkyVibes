@@ -1,0 +1,17 @@
+{
+  "name": "@kinky-vibes/docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "predev": "npm run build -w @kinky-vibes/ui",
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsx scripts/generate-search.ts && vite build",
+    "preview": "vite preview --host 127.0.0.1 --port 4179",
+    "typecheck": "vue-tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@kinky-vibes/ui": "0.1.0",
+    "vue": "^3.5.39"
+  }
+}
