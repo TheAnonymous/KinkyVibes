@@ -18,14 +18,18 @@ import {
 import { KvChevronLeftIcon, KvChevronRightIcon, KvMenuIcon } from '@kinky-vibes/ui/icons'
 import ComponentPreview from './ComponentPreview'
 import DocsNavigation from './DocsNavigation.vue'
+import DocsPageRail from './DocsPageRail.vue'
 import DocsSearch from './DocsSearch.vue'
+import DocsSectionHeading from './DocsSectionHeading.vue'
 import EditorialVisual from './EditorialVisual.vue'
 import ShowcasePreview from './ShowcasePreview.vue'
+import TokenExplorer from './TokenExplorer.vue'
 import { categories, componentDocs, type ComponentDoc } from './catalog'
 import { featureStories, pageVisuals, systemFieldImage } from './editorial'
 import { heroImage, showcaseScenes } from './showcase'
 
 const route = ref('/')
+const routeSection = ref('')
 const navOpen = ref(false)
 const copied = ref(false)
 const navTrigger = ref<HTMLButtonElement | null>(null)
@@ -33,8 +37,12 @@ const heroTab = ref('system')
 const heroMonitoring = ref(true)
 const heroProgress = ref(68)
 const activeCategory = ref(categories[0] ?? '')
+const activeSection = ref('')
+const scrollProgress = ref(0)
+const routeEpoch = ref(0)
 const categorySections = new Map<string, HTMLElement>()
 let categoryObserver: IntersectionObserver | undefined
+let sectionObserver: IntersectionObserver | undefined
 
 const heroTabs = [
   { id: 'system', label: 'System' },
@@ -42,19 +50,37 @@ const heroTabs = [
 ]
 
 const normalizeRoute = () => {
-  route.value = window.location.hash.slice(1) || '/'
+  const previousRoute = route.value
+  const raw = window.location.hash.slice(1) || '/'
+  const [path, search = ''] = raw.split('?')
+  route.value = path || '/'
+  routeSection.value = new URLSearchParams(search).get('section') ?? ''
   navOpen.value = false
-  window.scrollTo({ top: 0 })
+  if (previousRoute !== route.value) {
+    routeEpoch.value += 1
+    window.scrollTo({ top: 0 })
+  }
   document.title = pageTitle(route.value)
+  void syncRequestedSection()
+}
+
+function updateScrollProgress() {
+  const available = document.documentElement.scrollHeight - window.innerHeight
+  scrollProgress.value = available > 0 ? Math.min(1, Math.max(0, window.scrollY / available)) : 0
+  updateActiveSectionFromScroll()
 }
 
 onMounted(() => {
   normalizeRoute()
   window.addEventListener('hashchange', normalizeRoute)
+  window.addEventListener('scroll', updateScrollProgress, { passive: true })
+  updateScrollProgress()
 })
 onBeforeUnmount(() => {
   window.removeEventListener('hashchange', normalizeRoute)
+  window.removeEventListener('scroll', updateScrollProgress)
   categoryObserver?.disconnect()
+  sectionObserver?.disconnect()
 })
 
 const currentComponent = computed(() => {
@@ -65,6 +91,101 @@ const currentComponent = computed(() => {
 const currentComponentIndex = computed(() => currentComponent.value ? componentDocs.indexOf(currentComponent.value) : -1)
 const previousComponent = computed(() => currentComponentIndex.value > 0 ? componentDocs[currentComponentIndex.value - 1] : undefined)
 const nextComponent = computed(() => currentComponentIndex.value >= 0 ? componentDocs[currentComponentIndex.value + 1] : undefined)
+
+interface PageSection {
+  id: string
+  label: string
+}
+
+const staticPageSections: Record<string, PageSection[]> = {
+  '/installation': [
+    { id: 'package', label: 'Package' },
+    { id: 'imports', label: 'Named imports' },
+    { id: 'plugin', label: 'Global plugin' },
+  ],
+  '/tokens': [{ id: 'explorer', label: 'Token explorer' }],
+  '/guides/ssr': [
+    { id: 'nuxt-plugin', label: 'Nuxt plugin' },
+    { id: 'hydration', label: 'Hydration rules' },
+  ],
+  '/guides/customization': [
+    { id: 'scoped-overrides', label: 'Scoped overrides' },
+    { id: 'css-boundary', label: 'CSS boundary' },
+  ],
+  '/accessibility': [
+    { id: 'manual-checklist', label: 'Manual checklist' },
+    { id: 'scope-statement', label: 'Scope statement' },
+  ],
+}
+
+const currentPageSections = computed<PageSection[]>(() => {
+  if (currentComponent.value) {
+    return [
+      { id: 'preview', label: 'Preview' },
+      { id: 'api', label: 'API' },
+      ...(currentComponent.value.keyboard?.length ? [{ id: 'keyboard', label: 'Keyboard' }] : []),
+    ]
+  }
+  return staticPageSections[route.value] ?? []
+})
+const railMetadata = computed(() => {
+  if (currentComponent.value) {
+    return [
+      { label: 'Category', value: currentComponent.value.category },
+      { label: 'Catalog', value: `${String(currentComponentIndex.value + 1).padStart(2, '0')} / ${componentDocs.length}` },
+      { label: 'Props', value: String(currentComponent.value.props.length) },
+      { label: 'Keyboard', value: currentComponent.value.keyboard?.length ? 'Supported' : 'Native / N.A.' },
+    ]
+  }
+  const type = route.value === '/tokens' ? 'Reference' : route.value === '/installation' ? 'Start' : 'Guide'
+  const index = Math.max(0, currentPageSections.value.findIndex((section) => section.id === activeSection.value))
+  return [
+    { label: 'Page type', value: type },
+    { label: 'Section', value: `${index + 1} / ${currentPageSections.value.length}` },
+    { label: 'Sections', value: String(currentPageSections.value.length) },
+  ]
+})
+
+function updateActiveSectionFromScroll() {
+  if (!currentPageSections.value.length) return
+  const activationLine = window.innerWidth <= 800 ? 160 : 120
+  const passed = currentPageSections.value.filter((section) => {
+    const element = document.getElementById(section.id)
+    return element ? element.getBoundingClientRect().top <= activationLine : false
+  })
+  activeSection.value = passed.at(-1)?.id ?? currentPageSections.value[0]?.id ?? ''
+}
+
+async function syncRequestedSection() {
+  await nextTick()
+  initializeSectionObserver()
+  const requested = currentPageSections.value.find((section) => section.id === routeSection.value)
+  if (!requested) {
+    updateActiveSectionFromScroll()
+    return
+  }
+  activeSection.value = requested.id
+  window.requestAnimationFrame(() => {
+    const element = document.getElementById(requested.id)
+    if (!element) return
+    const root = document.documentElement
+    const previousBehavior = root.style.scrollBehavior
+    root.style.scrollBehavior = 'auto'
+    element.scrollIntoView({ block: 'start', behavior: 'auto' })
+    activeSection.value = requested.id
+    window.requestAnimationFrame(() => { root.style.scrollBehavior = previousBehavior })
+  })
+}
+
+function initializeSectionObserver() {
+  sectionObserver?.disconnect()
+  if (!currentPageSections.value.length || !('IntersectionObserver' in window)) return
+  sectionObserver = new IntersectionObserver(updateActiveSectionFromScroll, { rootMargin: '-64px 0px -55% 0px', threshold: [0, 0.1, 0.5] })
+  currentPageSections.value.forEach((section) => {
+    const element = document.getElementById(section.id)
+    if (element) sectionObserver?.observe(element)
+  })
+}
 
 const staticPageTitles: Record<string, string> = {
   '/': 'KinkyVibes UI — Industrial Vue components',
@@ -106,7 +227,7 @@ function initializeCategoryObserver() {
       .sort((a, b) => b.intersectionRatio - a.intersectionRatio || a.boundingClientRect.top - b.boundingClientRect.top)
     const category = visible[0]?.target.getAttribute('data-category')
     if (category) activeCategory.value = category
-  }, { rootMargin: '-5rem 0px -55% 0px', threshold: [0, 0.1, 0.25, 0.5] })
+  }, { rootMargin: '-80px 0px -55% 0px', threshold: [0, 0.1, 0.25, 0.5] })
   categorySections.forEach((element) => categoryObserver?.observe(element))
 }
 
@@ -135,21 +256,6 @@ watch(activeCategory, async (category) => {
   document.querySelector<HTMLElement>(`[data-category-button="${categorySlug(category)}"]`)?.scrollIntoView({ block: 'nearest', inline: 'center' })
 })
 
-const tokens = [
-  ['--kv-color-bg', '#0d0d0e', 'Root background'],
-  ['--kv-color-surface', '#151516', 'Asphalt surface'],
-  ['--kv-color-surface-raised', '#1c1c1e', 'Raised steel surface'],
-  ['--kv-color-text', '#e9e4d8', 'Bone text'],
-  ['--kv-color-text-muted', '#a29e96', 'Muted text'],
-  ['--kv-color-signal', '#e22832', 'Primary signal'],
-  ['--kv-color-focus', '#f0cf63', 'Keyboard focus'],
-  ['--kv-space-2', '0.5rem', 'Compact gap'],
-  ['--kv-space-4', '1rem', 'Standard gap'],
-  ['--kv-space-6', '2rem', 'Section gap'],
-  ['--kv-radius-sm', '1px', 'Control corner'],
-  ['--kv-shadow-hard', '4px 4px 0 #000', 'Mechanical shadow'],
-]
-
 async function copyCode(code: string) {
   await navigator.clipboard.writeText(code)
   copied.value = true
@@ -168,22 +274,21 @@ function advanceSequence() {
   heroProgress.value = heroProgress.value >= 92 ? 32 : heroProgress.value + 8
 }
 
-function restoreNavigationFocus() {
-  window.setTimeout(() => navTrigger.value?.focus(), 0)
-}
 </script>
 
 <template>
   <KvProvider>
     <KvVisuallyHidden as="a" href="#main-content" focusable>Skip to content</KvVisuallyHidden>
     <div class="docs-shell">
+      <div class="docs-scroll-progress" :style="{ transform: `scaleX(${scrollProgress})` }" aria-hidden="true"></div>
+      <div :key="routeEpoch" class="docs-route-wipe" aria-hidden="true"></div>
       <header class="docs-topbar">
         <a class="docs-brand" href="#/" aria-label="KinkyVibes UI home">
           <span class="docs-brand__mark" aria-hidden="true">KV</span>
-          <span>KinkyVibes <small>UI / 0.1</small></span>
+          <span>KinkyVibes <small>UI / 1.0</small></span>
         </a>
         <DocsSearch />
-        <a class="docs-github" href="https://github.com/kinky-vibes/kinky-vibes" rel="noreferrer">GitHub</a>
+        <a class="docs-github" href="https://github.com/TheAnonymous/KinkyVibes" rel="noreferrer">GitHub</a>
         <button ref="navTrigger" class="docs-nav-toggle" type="button" :aria-expanded="navOpen" aria-label="Menu" @click="navOpen = true">
           <KvMenuIcon :size="20" aria-hidden="true" /><span>Menu</span>
         </button>
@@ -193,11 +298,11 @@ function restoreNavigationFocus() {
         <DocsNavigation :route="route" />
       </aside>
 
-      <KvDrawer v-model:open="navOpen" title="Documentation" description="Navigate the KinkyVibes system." side="left" size="sm" @close="restoreNavigationFocus">
+      <KvDrawer v-model:open="navOpen" title="Documentation" description="Navigate the KinkyVibes system." side="left" size="sm">
         <DocsNavigation :route="route" @navigate="navOpen = false" />
       </KvDrawer>
 
-      <main id="main-content" class="docs-main" tabindex="-1">
+      <main id="main-content" class="docs-main" tabindex="-1" :data-route-section="routeSection" :data-active-section="activeSection">
         <template v-if="route === '/'">
           <section class="docs-hero">
             <div class="docs-hero__copy">
@@ -223,6 +328,7 @@ function restoreNavigationFocus() {
                 decoding="async"
                 fetchpriority="high"
               />
+              <span class="docs-image-coordinate" aria-hidden="true">FIELD / 59.91N · 10.75E</span>
               <KvCard class="docs-hero__control" padding="sm">
                 <template #header>
                   <div class="docs-control-header">
@@ -264,7 +370,7 @@ function restoreNavigationFocus() {
               loading="lazy"
               decoding="async"
             />
-            <figcaption><span>Field / 00</span><strong>One system. Every layer.</strong></figcaption>
+            <figcaption><span>Field / 00 · 59.91N</span><strong>One system. Every layer.</strong></figcaption>
           </figure>
           <KvContainer size="md">
             <section class="docs-section">
@@ -291,16 +397,17 @@ function restoreNavigationFocus() {
         </template>
 
         <KvContainer v-else-if="route === '/installation'" size="md">
-          <article class="docs-article">
+          <div class="docs-content-layout">
+          <article class="docs-article docs-reveal-group">
             <KvHeading :level="1" eyebrow="Start / 01">Installation</KvHeading>
             <KvText size="lg" tone="muted">Vue is the only peer. Import the complete dark theme once at the application boundary.</KvText>
             <EditorialVisual :image="pageVisuals.installation" marker="page-installation" label="Module / load path" />
-            <h2>Package</h2>
+            <DocsSectionHeading id="package" title="Package" :route="route" />
             <KvCode block>npm install @kinky-vibes/ui vue</KvCode>
-            <h2>Named imports</h2>
+            <DocsSectionHeading id="imports" title="Named imports" :route="route" />
             <KvCode block>import { KvButton, KvField, KvInput } from '@kinky-vibes/ui'
 import '@kinky-vibes/ui/styles.css'</KvCode>
-            <h2>Global plugin</h2>
+            <DocsSectionHeading id="plugin" title="Global plugin" :route="route" />
             <KvCode block>import { createApp } from 'vue'
 import { KinkyVibes } from '@kinky-vibes/ui'
 import '@kinky-vibes/ui/styles.css'
@@ -308,20 +415,20 @@ import '@kinky-vibes/ui/styles.css'
 createApp(App).use(KinkyVibes).mount('#app')</KvCode>
             <div class="docs-callout"><strong>Tree shaking</strong><p>Prefer named imports. The optional plugin intentionally references every component for global registration.</p></div>
           </article>
+          <DocsPageRail :route="route" :active-section="activeSection" :sections="currentPageSections" :metadata="railMetadata" @navigate="activeSection = $event" />
+          </div>
         </KvContainer>
 
         <KvContainer v-else-if="route === '/tokens'" size="md">
-          <article class="docs-article">
+          <div class="docs-content-layout">
+          <article class="docs-article docs-reveal-group">
             <KvHeading :level="1" eyebrow="Theme / 01">Token explorer</KvHeading>
             <KvText size="lg" tone="muted">Every supported theme boundary uses the --kv-* namespace. Import tokens.css alone when the default component styling is not required.</KvText>
             <EditorialVisual :image="pageVisuals.tokens" marker="page-tokens" label="Material / token matrix" />
-            <div class="docs-token-grid">
-              <div v-for="token in tokens" :key="token[0]" class="docs-token">
-                <span class="docs-token__swatch" :style="{ background: token[1] }"></span>
-                <code>{{ token[0] }}</code><strong>{{ token[1] }}</strong><small>{{ token[2] }}</small>
-              </div>
-            </div>
+            <TokenExplorer />
           </article>
+          <DocsPageRail :route="route" :active-section="activeSection" :sections="currentPageSections" :metadata="railMetadata" @navigate="activeSection = $event" />
+          </div>
         </KvContainer>
 
         <KvContainer v-else-if="route === '/components'" size="lg">
@@ -360,9 +467,10 @@ createApp(App).use(KinkyVibes).mount('#app')</KvCode>
                   :width="scene.image.width"
                   :height="scene.image.height"
                   alt=""
-                  loading="lazy"
+                  :loading="scene.category === categories[0] ? 'eager' : 'lazy'"
                   decoding="async"
                 />
+                <span class="docs-image-coordinate" aria-hidden="true">{{ scene.index }} / 59.91N · 10.75E</span>
                 <div class="docs-category-scene__preview">
                   <div class="docs-demo-label"><span>Live example</span><span>{{ scene.preview }}</span></div>
                   <div class="docs-category-scene__control">
@@ -381,11 +489,13 @@ createApp(App).use(KinkyVibes).mount('#app')</KvCode>
         </KvContainer>
 
         <KvContainer v-else-if="currentComponent" size="md">
-          <article class="docs-article">
+          <div class="docs-content-layout">
+          <article class="docs-article docs-reveal-group">
             <nav class="docs-breadcrumb" aria-label="Breadcrumb"><a href="#/components">Components</a><span aria-hidden="true">/</span><span>{{ currentComponent.category }}</span><span aria-hidden="true">/</span><span aria-current="page">{{ currentComponent.name }}</span></nav>
             <KvHeading :level="1" :eyebrow="currentComponent.category">{{ currentComponent.name }}</KvHeading>
             <KvText size="lg" tone="muted">{{ currentComponent.description }}</KvText>
             <section class="docs-demo-section">
+              <DocsSectionHeading id="preview" title="Preview" :route="route" />
               <div class="docs-demo-label"><span>Live example</span><span>Interactive</span></div>
               <div class="docs-demo"><ComponentPreview :name="currentComponent.name" /></div>
               <div class="docs-code-wrap">
@@ -394,7 +504,7 @@ createApp(App).use(KinkyVibes).mount('#app')</KvCode>
               </div>
             </section>
             <section>
-              <h2>API</h2>
+              <DocsSectionHeading id="api" title="API" :route="route" />
               <div class="docs-api-wrap">
                 <table class="docs-api-table">
                   <thead><tr><th>Prop</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
@@ -406,7 +516,7 @@ createApp(App).use(KinkyVibes).mount('#app')</KvCode>
               </div>
             </section>
             <section v-if="currentComponent.keyboard?.length">
-              <h2>Keyboard</h2>
+              <DocsSectionHeading id="keyboard" title="Keyboard" :route="route" />
               <ul class="docs-keyboard"><li v-for="item in currentComponent.keyboard" :key="item">{{ item }}</li></ul>
             </section>
             <nav class="docs-component-pagination" aria-label="Adjacent components">
@@ -415,14 +525,17 @@ createApp(App).use(KinkyVibes).mount('#app')</KvCode>
               <a v-if="nextComponent" :href="componentHref(nextComponent)"><span><small>Next component</small><strong>{{ nextComponent.name }}</strong></span><KvChevronRightIcon :size="18" aria-hidden="true" /></a>
             </nav>
           </article>
+          <DocsPageRail :route="route" :active-section="activeSection" :sections="currentPageSections" :metadata="railMetadata" @navigate="activeSection = $event" />
+          </div>
         </KvContainer>
 
         <KvContainer v-else-if="route === '/guides/ssr'" size="md">
-          <article class="docs-article">
+          <div class="docs-content-layout">
+          <article class="docs-article docs-reveal-group">
             <KvHeading :level="1" eyebrow="Guide / SSR">Vue SSR & Nuxt</KvHeading>
             <KvText size="lg" tone="muted">All modules can be imported without a DOM. IDs use Vue’s hydration-aware useId, and browser observers attach only after mount.</KvText>
             <EditorialVisual :image="pageVisuals.ssr" marker="page-ssr" label="Boundary / aligned output" />
-            <h2>Nuxt plugin</h2>
+            <DocsSectionHeading id="nuxt-plugin" title="Nuxt plugin" :route="route" />
             <KvCode block>// plugins/kinky-vibes.ts
 import { KinkyVibes } from '@kinky-vibes/ui'
 import '@kinky-vibes/ui/styles.css'
@@ -430,42 +543,51 @@ import '@kinky-vibes/ui/styles.css'
 export default defineNuxtPlugin((nuxtApp) =&gt; {
   nuxtApp.vueApp.use(KinkyVibes)
 })</KvCode>
-            <h2>Hydration rules</h2>
+            <DocsSectionHeading id="hydration" title="Hydration rules" :route="route" />
             <ul><li>Keep controlled values identical on server and first client render.</li><li>Do not derive defaultOpen from viewport state.</li><li>Teleport targets must exist before the component mounts.</li></ul>
             <div class="docs-callout"><strong>Verified paths</strong><p>The repository renders representative components with Vue renderToString, builds a Nuxt fixture, and installs the packed tarball into isolated Vue and Nuxt consumers.</p></div>
           </article>
+          <DocsPageRail :route="route" :active-section="activeSection" :sections="currentPageSections" :metadata="railMetadata" @navigate="activeSection = $event" />
+          </div>
         </KvContainer>
 
         <KvContainer v-else-if="route === '/guides/customization'" size="md">
-          <article class="docs-article">
+          <div class="docs-content-layout">
+          <article class="docs-article docs-reveal-group">
             <KvHeading :level="1" eyebrow="Guide / Theme">Customization</KvHeading>
             <KvText size="lg" tone="muted">KinkyVibes remains a single dark theme. Customize emphasis and rhythm by overriding tokens rather than branching into theme modes.</KvText>
             <EditorialVisual :image="pageVisuals.customization" marker="page-customization" label="Surface / controlled override" />
-            <h2>Scoped overrides</h2>
+            <DocsSectionHeading id="scoped-overrides" title="Scoped overrides" :route="route" />
             <KvCode block>&lt;KvProvider :tokens="{
   '--kv-color-signal': '#ff4d00',
   '--kv-space-4': '1.125rem'
 }"&gt;
   &lt;App /&gt;
 &lt;/KvProvider&gt;</KvCode>
-            <h2>CSS boundary</h2>
+            <DocsSectionHeading id="css-boundary" title="CSS boundary" :route="route" />
             <KvCode block>.operations-panel {
   --kv-color-surface: #121416;
   --kv-shadow-hard: 6px 6px 0 #000;
 }</KvCode>
             <p>Stable kv-* classes are available for narrow integration adjustments. Token overrides are less coupled and should be the default.</p>
           </article>
+          <DocsPageRail :route="route" :active-section="activeSection" :sections="currentPageSections" :metadata="railMetadata" @navigate="activeSection = $event" />
+          </div>
         </KvContainer>
 
         <KvContainer v-else-if="route === '/accessibility'" size="md">
-          <article class="docs-article">
+          <div class="docs-content-layout">
+          <article class="docs-article docs-reveal-group">
             <KvHeading :level="1" eyebrow="Quality / A11Y">Accessibility</KvHeading>
             <KvText size="lg" tone="muted">Semantics, keyboard behavior, focus visibility, reduced motion, and live regions are tested as engineering requirements.</KvText>
             <EditorialVisual :image="pageVisuals.accessibility" marker="page-accessibility" label="Control / differentiated state" />
-            <h2>Manual checklist</h2>
+            <DocsSectionHeading id="manual-checklist" title="Manual checklist" :route="route" />
             <ul class="docs-checklist"><li>Complete every interactive example with keyboard only.</li><li>Confirm focus remains visible against all surfaces.</li><li>Verify dialog focus enters, cycles, and returns to the trigger.</li><li>Review labels, descriptions, errors, and live updates in NVDA, VoiceOver, or Orca.</li><li>Zoom to 200% at 375px and confirm no two-dimensional page overflow.</li><li>Enable reduced motion and verify non-essential transitions collapse.</li></ul>
-            <div class="docs-callout"><strong>Scope statement</strong><p>Automated axe checks on representative pages must report no critical violations. This evidence is best effort and is not a formal WCAG conformance declaration.</p></div>
+            <DocsSectionHeading id="scope-statement" title="Scope statement" :route="route" />
+            <div class="docs-callout"><strong>Automated checks</strong><p>Automated axe checks on representative pages must report no critical violations. This evidence is best effort and is not a formal WCAG conformance declaration.</p></div>
           </article>
+          <DocsPageRail :route="route" :active-section="activeSection" :sections="currentPageSections" :metadata="railMetadata" @navigate="activeSection = $event" />
+          </div>
         </KvContainer>
 
         <KvContainer v-else size="sm">
@@ -478,9 +600,9 @@ export default defineNuxtPlugin((nuxtApp) =&gt; {
           <div class="docs-end-cta__actions"><a href="#/installation">Install UI</a><a href="#/components">Browse components</a></div>
         </section>
         <footer class="docs-footer">
-          <span>@kinky-vibes/ui v0.1.0</span>
-          <span>Released under the <a href="https://github.com/kinky-vibes/kinky-vibes/blob/main/LICENSE" rel="noreferrer">MIT License</a></span>
-          <a href="https://github.com/kinky-vibes/kinky-vibes" rel="noreferrer">GitHub ↗</a>
+          <span>@kinky-vibes/ui v1.0.0</span>
+          <span>Released under the <a href="https://github.com/TheAnonymous/KinkyVibes/blob/main/LICENSE" rel="noreferrer">MIT License</a></span>
+          <a href="https://github.com/TheAnonymous/KinkyVibes" rel="noreferrer">GitHub ↗</a>
         </footer>
       </main>
     </div>

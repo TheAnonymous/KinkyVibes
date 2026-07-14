@@ -65,7 +65,11 @@
   --kv-z-toast: 1100;
   --kv-duration-fast: 90ms;
   --kv-duration-normal: 160ms;
+  --kv-duration-slow: 240ms;
   --kv-ease-mechanical: cubic-bezier(0.2, 0, 0, 1);
+  --kv-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --kv-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+  --kv-motion-shift: 0.375rem;
   --kv-container-sm: 42rem;
   --kv-container-md: 64rem;
   --kv-container-lg: 80rem;

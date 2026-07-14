@@ -1,20 +1,25 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { createApp, defineComponent, h, nextTick, ref } from 'vue'
-import { mount } from '@vue/test-utils'
+import { config, mount } from '@vue/test-utils'
 import {
   KinkyVibes,
+  KvAlert,
   KvButton,
   KvCombobox,
   KvDialog,
+  KvDropdownMenu,
   KvField,
   KvInput,
   KvTable,
   KvTabs,
+  KvTooltip,
   KvToastProvider,
   useKvToast,
   type KvSortState,
 } from '../src'
 import { KvCheckIcon } from '../src/icons'
+
+config.global.stubs = { transition: false, 'transition-group': false }
 
 const mountedWrappers: Array<ReturnType<typeof mount>> = []
 const trackedMount = (...args: Parameters<typeof mount>) => {
@@ -25,6 +30,7 @@ const trackedMount = (...args: Parameters<typeof mount>) => {
 
 afterEach(() => {
   mountedWrappers.splice(0).forEach((wrapper) => wrapper.unmount())
+  vi.useRealTimers()
 })
 
 describe('public package contracts', () => {
@@ -41,6 +47,36 @@ describe('public package contracts', () => {
     expect(wrapper.attributes('stroke')).toBe('currentColor')
     expect(wrapper.attributes('role')).toBe('img')
     expect(wrapper.attributes('aria-label')).toBe('Complete')
+  })
+
+  it('keeps visual alert status separate from opt-in announcement priority', () => {
+    const silent = trackedMount(KvAlert, { props: { status: 'error', title: 'Visual error' } })
+    expect(silent.attributes('role')).toBeUndefined()
+    const polite = trackedMount(KvAlert, { props: { announce: 'polite', title: 'Stored' } })
+    expect(polite.attributes('role')).toBe('status')
+    const assertive = trackedMount(KvAlert, { props: { status: 'neutral', announce: 'assertive', title: 'Disconnected' } })
+    expect(assertive.attributes('role')).toBe('alert')
+  })
+
+  it('forwards tooltip behavior and description directly to one HTML trigger', async () => {
+    vi.useFakeTimers()
+    const clicked = vi.fn()
+    const wrapper = trackedMount(KvTooltip, {
+      attachTo: document.body,
+      props: { text: 'Channel metadata', delay: 0 },
+      slots: { default: () => h('button', { type: 'button', onClick: clicked }, 'Inspect') },
+    })
+    const trigger = wrapper.get('button')
+    expect(trigger.classes()).toContain('kv-tooltip__trigger')
+    expect(trigger.attributes('tabindex')).toBeUndefined()
+    await trigger.trigger('click')
+    expect(clicked).toHaveBeenCalledOnce()
+    await trigger.trigger('focus')
+    vi.runAllTimers()
+    await nextTick()
+    const tooltip = document.querySelector<HTMLElement>('[role="tooltip"]')
+    expect(tooltip?.textContent).toBe('Channel metadata')
+    expect(trigger.attributes('aria-describedby')).toBe(tooltip?.id)
   })
 })
 
@@ -122,6 +158,38 @@ describe('keyboard interaction', () => {
     expect(input.element.value).toBe('Bravo')
     expect(wrapper.find('[role="listbox"]').exists()).toBe(false)
   })
+
+  it('keeps enabled combobox and menu items visible for Home and End', async () => {
+    const scrollIntoView = vi.fn()
+    HTMLElement.prototype.scrollIntoView = scrollIntoView
+    const options = [
+      { value: 'disabled-first', label: 'Disabled first', disabled: true },
+      { value: 'alpha', label: 'Alpha' },
+      { value: 'disabled-middle', label: 'Disabled middle', disabled: true },
+      { value: 'omega', label: 'Omega' },
+      { value: 'disabled-last', label: 'Disabled last', disabled: true },
+    ]
+    const combobox = trackedMount(KvCombobox, { attachTo: document.body, props: { options } })
+    const input = combobox.get('input')
+    await input.trigger('focus')
+    await input.trigger('keydown', { key: 'End' })
+    expect(input.attributes('aria-activedescendant')).toMatch(/-3$/)
+    await input.trigger('keydown', { key: 'Home' })
+    expect(input.attributes('aria-activedescendant')).toMatch(/-1$/)
+
+    const menu = trackedMount(KvDropdownMenu, {
+      attachTo: document.body,
+      props: { items: options.map((option) => ({ id: option.value, label: option.label, disabled: option.disabled })) },
+    })
+    await menu.get('.kv-dropdown__trigger').trigger('click')
+    await nextTick()
+    const menuElement = document.querySelector<HTMLElement>('[role="menu"]')!
+    expect(document.activeElement?.textContent).toBe('Alpha')
+    menuElement.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }))
+    await nextTick()
+    expect(document.activeElement?.textContent).toBe('Omega')
+    expect(scrollIntoView).toHaveBeenCalled()
+  })
 })
 
 describe('consumer-owned table state', () => {
@@ -183,6 +251,9 @@ describe('modal and toast lifecycle', () => {
 
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
     await nextTick()
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull()
+    expect(document.documentElement.style.overflow).toBe('hidden')
+    await new Promise((resolve) => setTimeout(resolve, 280))
     expect(document.querySelector('[role="dialog"]')).toBeNull()
     expect(document.activeElement).toBe(trigger)
     expect(document.documentElement.style.overflow).toBe('')
@@ -202,7 +273,54 @@ describe('modal and toast lifecycle', () => {
     expect(document.querySelector('.kv-toast__title')?.textContent).toBe('Stored')
     vi.advanceTimersByTime(1000)
     await nextTick()
+    vi.advanceTimersByTime(500)
+    await nextTick()
     expect(document.querySelector('.kv-toast')).toBeNull()
-    vi.useRealTimers()
+  })
+
+  it('pauses toast timers for hover and focus-within, then resumes the true remainder', async () => {
+    vi.useFakeTimers()
+    const Trigger = defineComponent({
+      setup() {
+        const { toast } = useKvToast()
+        return () => h('button', { onClick: () => toast({ title: 'Calibrating', actionLabel: 'Inspect', duration: 1000 }) }, 'Toast')
+      },
+    })
+    const wrapper = trackedMount(KvToastProvider, { attachTo: document.body, slots: { default: () => h(Trigger) } })
+    await wrapper.get('button').trigger('click')
+    await nextTick()
+    vi.advanceTimersByTime(400)
+    const toast = document.querySelector<HTMLElement>('.kv-toast')!
+    toast.dispatchEvent(new PointerEvent('pointerenter', { bubbles: true }))
+    const action = toast.querySelector<HTMLButtonElement>('.kv-toast__action')!
+    action.focus()
+    toast.dispatchEvent(new PointerEvent('pointerleave', { bubbles: true }))
+    vi.advanceTimersByTime(1200)
+    await nextTick()
+    expect(document.querySelector('.kv-toast')).not.toBeNull()
+    action.blur()
+    vi.advanceTimersByTime(599)
+    await nextTick()
+    expect(document.querySelector('.kv-toast')).not.toBeNull()
+    vi.advanceTimersByTime(1)
+    await nextTick()
+    vi.advanceTimersByTime(500)
+    await nextTick()
+    expect(document.querySelector('.kv-toast')).toBeNull()
+  })
+
+  it('keeps duration-zero toasts until explicit dismissal', async () => {
+    vi.useFakeTimers()
+    const Trigger = defineComponent({
+      setup() {
+        const { toast } = useKvToast()
+        return () => h('button', { onClick: () => toast({ title: 'Pinned', duration: 0 }) }, 'Toast')
+      },
+    })
+    const wrapper = trackedMount(KvToastProvider, { attachTo: document.body, slots: { default: () => h(Trigger) } })
+    await wrapper.get('button').trigger('click')
+    vi.advanceTimersByTime(60_000)
+    await nextTick()
+    expect(document.querySelector('.kv-toast__title')?.textContent).toBe('Pinned')
   })
 })

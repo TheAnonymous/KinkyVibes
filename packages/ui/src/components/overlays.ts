@@ -1,12 +1,15 @@
 import {
+  cloneVNode,
+  Comment,
   computed,
   defineComponent,
   h,
-  nextTick,
   onBeforeUnmount,
   onMounted,
   ref,
   Teleport,
+  Transition,
+  watch,
   type PropType,
 } from 'vue'
 import { useKvControllable } from '../composables/useKvControllable'
@@ -36,6 +39,7 @@ function createModal(name: 'KvDialog' | 'KvAlertDialog' | 'KvDrawer', role: 'dia
     emits: ['update:open', 'close', 'cancel', 'confirm'],
     setup(props, { emit, slots }) {
       const isOpen = useKvControllable<boolean>(props, 'open', props.defaultOpen, emit)
+      const trapActive = ref(isOpen.value)
       const panel = ref<HTMLElement | null>(null)
       const initialFocus = ref<HTMLElement | null>(null)
       const mounted = ref(false)
@@ -46,15 +50,17 @@ function createModal(name: 'KvDialog' | 'KvAlertDialog' | 'KvDrawer', role: 'dia
         isOpen.value = false
         emit('close', reason)
       }
-      useKvFocusTrap(panel, isOpen, {
+      useKvFocusTrap(panel, trapActive, {
         onEscape: () => { if (props.closeOnEscape) close('escape') },
         lockBodyScroll: true,
         initialFocus: role === 'alertdialog' ? initialFocus : undefined,
       })
+      watch(isOpen, (value) => {
+        if (value) trapActive.value = true
+      })
       onMounted(() => { mounted.value = true })
 
       return () => {
-        if (!isOpen.value) return null
         const actions = role === 'alertdialog'
           ? (slots.actions?.({ close }) ?? [
               h('button', {
@@ -88,7 +94,10 @@ function createModal(name: 'KvDialog' | 'KvAlertDialog' | 'KvDrawer', role: 'dia
           h('div', { class: drawer ? 'kv-drawer__body' : 'kv-dialog__body' }, slots.default?.({ close })),
           actions && h('footer', { class: drawer ? 'kv-drawer__footer' : 'kv-dialog__footer' }, actions),
         ]))
-        return h(Teleport, { to: props.teleportTo, disabled: !mounted.value }, content)
+        return h(Teleport, { to: props.teleportTo, disabled: !mounted.value }, h(Transition, {
+          name: drawer ? 'kv-drawer-motion' : 'kv-overlay-motion',
+          onAfterLeave: () => { trapActive.value = false },
+        }, () => isOpen.value ? content : null))
       }
     },
   })
@@ -113,13 +122,14 @@ export const KvPopover = defineComponent({
     const trigger = ref<HTMLElement | null>(null)
     const content = ref<HTMLElement | null>(null)
     const mounted = ref(false)
+    const restoreAfterLeave = ref(true)
     const placement = computed(() => props.placement)
     const { style, resolvedPlacement } = useKvPosition(trigger, content, isOpen, placement)
     const close = (reason: string, restore = false) => {
       if (!isOpen.value) return
+      restoreAfterLeave.value = restore
       isOpen.value = false
       emit('close', reason)
-      if (restore) void nextTick(() => trigger.value?.focus())
     }
     const pointer = (event: PointerEvent) => {
       if (!isOpen.value || !props.closeOnOutside || trigger.value?.contains(event.target as Node) || content.value?.contains(event.target as Node)) return
@@ -137,14 +147,22 @@ export const KvPopover = defineComponent({
       document.removeEventListener('pointerdown', pointer)
       document.removeEventListener('keydown', keydown)
     })
+    watch(isOpen, (value) => {
+      if (value) restoreAfterLeave.value = true
+    })
     return () => h('span', { class: 'kv-popover-root' }, [
       h('button', {
         ref: trigger, class: 'kv-popover__trigger', type: 'button', 'aria-label': props.triggerLabel,
         'aria-haspopup': 'dialog', 'aria-expanded': isOpen.value, onClick: () => (isOpen.value = !isOpen.value),
       }, slots.trigger?.() ?? props.triggerLabel),
-      isOpen.value && h(Teleport, { to: props.teleportTo, disabled: !mounted.value }, h('div', {
+      h(Teleport, { to: props.teleportTo, disabled: !mounted.value }, h(Transition, {
+        name: 'kv-popover-motion',
+        onAfterLeave: () => {
+          if (restoreAfterLeave.value) trigger.value?.focus({ preventScroll: true })
+        },
+      }, () => isOpen.value ? h('div', {
         ref: content, class: 'kv-popover', role: 'dialog', style: style.value, 'data-placement': resolvedPlacement.value,
-      }, slots.default?.({ close }))),
+      }, slots.default?.({ close })) : null)),
     ])
   },
 })
@@ -175,16 +193,31 @@ export const KvTooltip = defineComponent({
     const hide = () => { clearTimeout(timer); open.value = false }
     onMounted(() => { mounted.value = true })
     onBeforeUnmount(() => clearTimeout(timer))
-    return () => h('span', {
-      ref: trigger, class: 'kv-tooltip__trigger', tabindex: 0,
-      'aria-describedby': open.value ? id.value : undefined,
-      onPointerenter: show, onPointerleave: hide, onFocus: show, onBlur: hide,
-      onKeydown: (event: KeyboardEvent) => { if (event.key === 'Escape') hide() },
-    }, [
-      slots.default?.(),
-      open.value && h(Teleport, { to: props.teleportTo, disabled: !mounted.value }, h('span', {
+    return () => {
+      const children = (slots.default?.() ?? []).filter((child) => child.type !== Comment)
+      const child = children[0]
+      if (children.length !== 1 || !child || typeof child.type !== 'string') {
+        console.warn('[KinkyVibes] KvTooltip requires exactly one HTML element in its default slot.')
+        return null
+      }
+      const existingDescription = child.props?.['aria-describedby']
+      const describedBy = [existingDescription, open.value && id.value].filter(Boolean).join(' ') || undefined
+      const triggerNode = cloneVNode(child, {
+        ref: (element: any) => { trigger.value = element instanceof HTMLElement ? element : null },
+        class: 'kv-tooltip__trigger',
+        'aria-describedby': describedBy,
+        onPointerenter: show,
+        onPointerleave: hide,
+        onFocus: show,
+        onBlur: hide,
+        onKeydown: (event: KeyboardEvent) => { if (event.key === 'Escape') hide() },
+      }, true)
+      const tooltip = h(Teleport, { to: props.teleportTo, disabled: !mounted.value }, h(Transition, {
+        name: 'kv-tooltip-motion',
+      }, () => open.value ? h('span', {
         ref: content, class: 'kv-tooltip', id: id.value, role: 'tooltip', style: style.value, 'data-placement': resolvedPlacement.value,
-      }, props.text)),
-    ])
+      }, props.text) : null))
+      return [triggerNode, tooltip]
+    }
   },
 })

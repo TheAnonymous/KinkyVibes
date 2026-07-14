@@ -1,4 +1,4 @@
-import { defineComponent, h, type PropType } from 'vue'
+import { defineComponent, h, Transition, type PropType } from 'vue'
 import { useKvControllable } from '../composables/useKvControllable'
 import { useKvId } from '../composables/useKvId'
 import type { KvAccordionItem, KvRowKey, KvSortState, KvTableColumn } from '../types'
@@ -48,9 +48,9 @@ export const KvAccordion = defineComponent({
           class: 'kv-accordion__trigger', id: triggerId, type: 'button', disabled: item.disabled,
           'aria-expanded': open, 'aria-controls': panelId, onClick: () => toggle(item.id),
         }, [h('span', item.title), h('span', { class: 'kv-accordion__icon', 'aria-hidden': 'true' }, open ? '−' : '+')])),
-        open && h('div', {
+        h(Transition, { name: 'kv-accordion-motion' }, () => open ? h('div', {
           class: 'kv-accordion__panel', id: panelId, role: 'region', 'aria-labelledby': triggerId,
-        }, slots[`item-${item.id}`]?.({ item }) ?? slots.default?.({ item }) ?? item.content),
+        }, slots[`item-${item.id}`]?.({ item }) ?? slots.default?.({ item }) ?? item.content) : null),
       ])
     }))
   },

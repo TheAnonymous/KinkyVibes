@@ -3,6 +3,7 @@ import {
   defineComponent,
   h,
   inject,
+  nextTick,
   onBeforeUnmount,
   onMounted,
   provide,
@@ -176,18 +177,25 @@ export const KvCombobox = defineComponent({
     const active = ref(-1)
     const query = ref(props.options.find((option) => option.value === value.value)?.label ?? value.value)
     const root = ref<HTMLElement | null>(null)
+    const list = ref<HTMLElement | null>(null)
     const fieldAttrs = useFieldAttributes(props)
     const listId = useKvId('combobox-list')
     const filtered = computed(() => {
       const needle = query.value.trim().toLocaleLowerCase()
       return props.options.filter((option) => !needle || option.label.toLocaleLowerCase().includes(needle))
     })
+    const firstEnabled = () => filtered.value.findIndex((option) => !option.disabled)
+    const lastEnabled = () => {
+      let index = filtered.value.length - 1
+      while (index >= 0 && filtered.value[index]?.disabled) index -= 1
+      return index
+    }
 
     const setOpen = (next: boolean) => {
       if (open.value === next) return
       open.value = next
       emit(next ? 'open' : 'close')
-      if (next) active.value = Math.max(0, filtered.value.findIndex((option) => !option.disabled))
+      if (next) active.value = firstEnabled()
     }
     const choose = (option: KvComboboxOption) => {
       if (option.disabled) return
@@ -207,14 +215,16 @@ export const KvCombobox = defineComponent({
     const onKeydown = (event: KeyboardEvent) => {
       if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
         event.preventDefault()
+        const wasOpen = open.value
         setOpen(true)
-        move(event.key === 'ArrowDown' ? 1 : -1)
+        if (wasOpen) move(event.key === 'ArrowDown' ? 1 : -1)
+        else active.value = event.key === 'ArrowDown' ? firstEnabled() : lastEnabled()
       } else if (event.key === 'Home' && open.value) {
         event.preventDefault()
-        active.value = 0
+        active.value = firstEnabled()
       } else if (event.key === 'End' && open.value) {
         event.preventDefault()
-        active.value = filtered.value.length - 1
+        active.value = lastEnabled()
       } else if (event.key === 'Enter' && open.value && filtered.value[active.value]) {
         event.preventDefault()
         choose(filtered.value[active.value]!)
@@ -231,6 +241,14 @@ export const KvCombobox = defineComponent({
     watch(() => props.modelValue, (next) => {
       if (next === undefined) return
       query.value = props.options.find((option) => option.value === next)?.label ?? next
+    })
+    watch(filtered, () => {
+      if (open.value) active.value = firstEnabled()
+    })
+    watch(active, async (index) => {
+      if (index < 0) return
+      await nextTick()
+      list.value?.querySelector<HTMLElement>(`#${listId.value}-${index}`)?.scrollIntoView({ block: 'nearest' })
     })
     return () =>
       h('div', { ref: root, class: 'kv-combobox' }, [
@@ -254,7 +272,7 @@ export const KvCombobox = defineComponent({
           onKeydown,
         }),
         open.value &&
-          h('ul', { class: 'kv-listbox', id: listId.value, role: 'listbox' },
+          h('ul', { ref: list, class: 'kv-listbox', id: listId.value, role: 'listbox' },
             filtered.value.length
               ? filtered.value.map((option, index) =>
                   h('li', {

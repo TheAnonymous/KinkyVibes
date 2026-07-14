@@ -92,7 +92,9 @@ export function useKvFocusTrap(
       unlockScroll()
       locked = false
     }
-    if (options.restoreFocus !== false) returnTarget?.focus()
+    if (options.restoreFocus !== false && returnTarget?.isConnected && !returnTarget.matches(':disabled, [aria-disabled="true"]')) {
+      returnTarget.focus({ preventScroll: true })
+    }
     returnTarget = null
   }
 

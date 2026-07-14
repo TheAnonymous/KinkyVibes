@@ -77,6 +77,16 @@ test('editorial page visuals remain stable', async ({ page }) => {
   }
 })
 
+test('technical content rail and complete token explorer remain stable', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/#/installation?section=imports')
+  await expect(page).toHaveScreenshot('technical-page-1440.png', { fullPage: true })
+
+  await page.goto('/#/tokens?section=explorer')
+  await expect(page.getByRole('searchbox', { name: 'Filter tokens' })).toBeVisible()
+  await expect(page).toHaveScreenshot('token-explorer-1440.png')
+})
+
 test('button states and open overlay remain stable', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/#/components/button')

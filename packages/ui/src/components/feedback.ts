@@ -7,6 +7,7 @@ import {
   provide,
   ref,
   Teleport,
+  TransitionGroup,
   type InjectionKey,
   type PropType,
 } from 'vue'
@@ -17,12 +18,16 @@ export const KvAlert = defineComponent({
   props: {
     title: String,
     status: { type: String as PropType<KvStatus>, default: 'neutral' },
+    announce: { type: String as PropType<'off' | 'polite' | 'assertive'>, default: 'off' },
     dismissible: Boolean,
     closeLabel: { type: String, default: 'Dismiss' },
   },
   emits: ['dismiss'],
   setup: (props, { emit, slots }) => () =>
-    h('div', { class: ['kv-alert', `kv-alert--${props.status}`], role: props.status === 'error' ? 'alert' : 'status' }, [
+    h('div', {
+      class: ['kv-alert', `kv-alert--${props.status}`],
+      role: props.announce === 'assertive' ? 'alert' : props.announce === 'polite' ? 'status' : undefined,
+    }, [
       h('span', { class: 'kv-alert__marker', 'aria-hidden': 'true' }),
       h('div', { class: 'kv-alert__content' }, [props.title && h('div', { class: 'kv-alert__title' }, props.title), h('div', { class: 'kv-alert__description' }, slots.default?.())]),
       props.dismissible && h('button', { class: 'kv-alert__close', type: 'button', 'aria-label': props.closeLabel, onClick: () => emit('dismiss') }, '×'),
@@ -104,17 +109,53 @@ export const KvToastProvider = defineComponent({
   setup(props, { slots }) {
     const toasts = ref<KvToast[]>([])
     const mounted = ref(false)
-    const timers = new Map<string, ReturnType<typeof setTimeout>>()
+    const timers = new Map<string, {
+      timer?: ReturnType<typeof setTimeout>
+      remaining: number
+      startedAt: number
+      paused: boolean
+      hovered: boolean
+      focusWithin: boolean
+    }>()
+    const startTimer = (id: string) => {
+      const state = timers.get(id)
+      if (!state || state.remaining <= 0) return
+      state.paused = false
+      state.startedAt = Date.now()
+      state.timer = setTimeout(() => dismiss(id), state.remaining)
+    }
+    const pauseTimer = (id: string, reason: 'hover' | 'focus') => {
+      const state = timers.get(id)
+      if (!state) return
+      if (reason === 'hover') state.hovered = true
+      else state.focusWithin = true
+      if (state.paused) return
+      clearTimeout(state.timer)
+      state.remaining = Math.max(0, state.remaining - (Date.now() - state.startedAt))
+      state.paused = true
+      state.timer = undefined
+    }
+    const resumeTimer = (id: string, reason: 'hover' | 'focus') => {
+      const state = timers.get(id)
+      if (!state) return
+      if (reason === 'hover') state.hovered = false
+      else state.focusWithin = false
+      if (state.hovered || state.focusWithin || !state.paused) return
+      startTimer(id)
+    }
     const dismiss = (id: string) => {
       toasts.value = toasts.value.filter((item) => item.id !== id)
-      clearTimeout(timers.get(id))
+      clearTimeout(timers.get(id)?.timer)
       timers.delete(id)
     }
     const toast = (options: KvToastOptions) => {
       const id = `kv-toast-${++toastSequence}`
       toasts.value.push({ ...options, id })
       const duration = options.duration ?? props.defaultDuration
-      if (duration > 0) timers.set(id, setTimeout(() => dismiss(id), duration))
+      if (duration > 0) {
+        timers.set(id, { remaining: duration, startedAt: Date.now(), paused: false, hovered: false, focusWithin: false })
+        startTimer(id)
+      }
       return id
     }
     const clear = () => [...toasts.value].forEach((item) => dismiss(item.id))
@@ -123,16 +164,26 @@ export const KvToastProvider = defineComponent({
     onBeforeUnmount(clear)
     return () => [
       slots.default?.(),
-      mounted.value && h(Teleport, { to: props.teleportTo }, h('div', {
+      mounted.value && h(Teleport, { to: props.teleportTo }, h(TransitionGroup, {
+        name: 'kv-toast-motion',
+        tag: 'div',
         class: ['kv-toasts', `kv-toasts--${props.placement}`], 'aria-label': 'Notifications',
-      }, toasts.value.map((item) => h('section', {
+      }, { default: () => toasts.value.map((item) => h('section', {
+        key: item.id,
         class: ['kv-toast', `kv-toast--${item.status ?? 'info'}`], role: item.status === 'error' ? 'alert' : 'status',
+        onPointerenter: () => pauseTimer(item.id, 'hover'),
+        onPointerleave: () => resumeTimer(item.id, 'hover'),
+        onFocusin: () => pauseTimer(item.id, 'focus'),
+        onFocusout: (event: FocusEvent) => {
+          const element = event.currentTarget as HTMLElement
+          if (!element.contains(event.relatedTarget as Node | null)) resumeTimer(item.id, 'focus')
+        },
       }, [
         h('span', { class: 'kv-toast__marker', 'aria-hidden': 'true' }),
         h('div', { class: 'kv-toast__content' }, [h('div', { class: 'kv-toast__title' }, item.title), item.description && h('div', { class: 'kv-toast__description' }, item.description)]),
         item.actionLabel && h('button', { class: 'kv-toast__action', type: 'button', onClick: () => item.onAction?.() }, item.actionLabel),
         h('button', { class: 'kv-toast__close', type: 'button', 'aria-label': 'Dismiss notification', onClick: () => dismiss(item.id) }, '×'),
-      ])))),
+      ])) })),
     ]
   },
 })

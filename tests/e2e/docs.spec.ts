@@ -7,8 +7,11 @@ test('desktop search supports shortcut, keyboard navigation, dismissal, and empt
   await page.keyboard.press('ControlOrMeta+k')
   const search = page.getByRole('combobox', { name: 'Search documentation' })
   await expect(search).toBeFocused()
+  await expect(page.getByRole('option', { name: /Components/ })).toBeVisible()
   await search.fill('combobox')
-  await expect(page.getByRole('option', { name: /KvCombobox/ })).toBeVisible()
+  const comboboxResult = page.getByRole('option', { name: /KvCombobox/ })
+  await expect(comboboxResult).toBeVisible()
+  await expect(comboboxResult.locator('strong mark')).toHaveText(/combobox/i)
   await page.keyboard.press('Enter')
   await expect(page.getByRole('heading', { level: 1, name: 'KvCombobox' })).toBeVisible()
 
@@ -32,6 +35,7 @@ test('mobile search opens from a compact trigger and follows arrow and Enter key
   await expect(dialog).toBeVisible()
   const search = dialog.getByRole('combobox', { name: 'Search documentation' })
   await expect(search).toBeFocused()
+  await expect(dialog.getByRole('option', { name: /Components/ })).toBeVisible()
   await search.fill('installation')
   await page.keyboard.press('ArrowDown')
   await page.keyboard.press('ArrowUp')
@@ -41,11 +45,20 @@ test('mobile search opens from a compact trigger and follows arrow and Enter key
 })
 
 test('search exposes a recoverable fetch error state', async ({ page }) => {
-  await page.route('**/search-index.json', (route) => route.fulfill({ status: 503, body: 'unavailable' }))
+  let shouldFail = true
+  await page.route('**/search-index.json', (route) => {
+    if (shouldFail) {
+      shouldFail = false
+      return route.fulfill({ status: 503, body: 'unavailable' })
+    }
+    return route.continue()
+  })
   await page.goto('/#/')
   await page.getByRole('combobox', { name: 'Search documentation' }).fill('button')
   await expect(page.getByRole('alert')).toContainText('Search offline')
-  await expect(page.getByRole('alert')).toContainText('navigating from the menu')
+  await page.getByRole('button', { name: 'Retry search' }).click()
+  await expect(page.getByRole('alert')).toBeHidden()
+  await expect(page.getByRole('option').filter({ has: page.locator('strong', { hasText: /^KvButton$/ }) })).toBeVisible()
 })
 
 test('showcase assets load and every embedded component remains interactive', async ({ page }) => {
@@ -77,9 +90,9 @@ test('showcase assets load and every embedded component remains interactive', as
   await page.goto('/#/components')
   const categoryImages = page.locator('[data-showcase-scene] [data-showcase-image]')
   await expect(categoryImages).toHaveCount(7)
-  for (const image of await categoryImages.all()) {
+  for (const [index, image] of (await categoryImages.all()).entries()) {
     await image.scrollIntoViewIfNeeded()
-    await expect(image).toHaveAttribute('loading', 'lazy')
+    await expect(image).toHaveAttribute('loading', index === 0 ? 'eager' : 'lazy')
     await expect(image).toHaveAttribute('decoding', 'async')
     await expect(image).toHaveAttribute('alt', '')
     await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth)).toBeGreaterThan(0)
@@ -188,8 +201,70 @@ test('catalog category navigation tracks sections and details expose adjacent co
   await expect(page).toHaveTitle('KvButton — KinkyVibes UI')
   const adjacent = page.getByRole('navigation', { name: 'Adjacent components' })
   await expect(adjacent.getByRole('link', { name: /Previous component KvCode/ })).toBeVisible()
-  await adjacent.getByRole('link', { name: /Next component KvIconButton/ }).click()
+  const next = adjacent.getByRole('link', { name: /Next component KvIconButton/ })
+  await expect(next).toHaveAttribute('href', '#/components/icon-button')
+  await next.focus()
+  await next.press('Enter')
   await expect(page.getByRole('heading', { level: 1, name: 'KvIconButton' })).toBeVisible()
+})
+
+test('section deep links survive reload and history while the rail tracks without rewriting the URL', async ({ page }) => {
+  await page.goto('/#/components/button?section=api')
+  await expect(page.getByRole('heading', { level: 1, name: 'KvButton' })).toBeVisible()
+  const rail = page.getByRole('navigation', { name: 'Page sections' })
+  await expect(rail.getByRole('link', { name: /API/ })).toHaveAttribute('aria-current', 'location')
+  await expect(page).toHaveURL(/#\/components\/button\?section=api$/)
+  await page.reload()
+  await expect(rail.getByRole('link', { name: /API/ })).toHaveAttribute('aria-current', 'location')
+
+  await rail.getByRole('link', { name: /Keyboard/ }).click()
+  await expect(page).toHaveURL(/#\/components\/button\?section=keyboard$/)
+  await expect(rail.getByRole('link', { name: /Keyboard/ })).toHaveAttribute('aria-current', 'location')
+  await page.goBack()
+  await expect(page).toHaveURL(/#\/components\/button\?section=api$/)
+  await expect(rail.getByRole('link', { name: /API/ })).toHaveAttribute('aria-current', 'location')
+
+  await page.goto('/#/components/button')
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+  await expect(rail.getByRole('link', { name: /API/ })).toHaveAttribute('aria-current', 'location')
+  await expect(page).toHaveURL(/#\/components\/button$/)
+
+  await page.goto('/#/components/button?section=unknown')
+  await expect(page.getByRole('heading', { level: 1, name: 'KvButton' })).toBeVisible()
+  await expect(page.locator('#unknown')).toHaveCount(0)
+  await expect(page).toHaveURL(/section=unknown$/)
+})
+
+test('section headings copy their compatible hash URLs with visible and live feedback', async ({ page, browserName }) => {
+  if (browserName === 'chromium') await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto('/#/components/button')
+  const copy = page.getByRole('button', { name: 'Copy link to API' })
+  await copy.click()
+  await expect(copy).toHaveText('Copied')
+  await expect(page.getByText('Link to API copied.', { exact: true })).toBeAttached()
+  if (browserName === 'chromium') {
+    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toMatch(/#\/components\/button\?section=api$/)
+  }
+})
+
+test('token explorer filters the generated inventory, reports empty state, and copies declarations', async ({ page, browserName }) => {
+  if (browserName === 'chromium') await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
+  await page.goto('/#/tokens?section=explorer')
+  await expect(page.getByText('68 of 68 tokens', { exact: true })).toBeVisible()
+  const filter = page.getByRole('searchbox', { name: 'Filter tokens' })
+  await filter.fill('duration')
+  await expect(page.locator('.docs-token')).toHaveCount(3)
+  await page.getByRole('button', { name: 'Motion', exact: true }).click()
+  await expect(page.locator('.docs-token')).toHaveCount(3)
+  await filter.fill('not-a-token')
+  await expect(page.getByText('No matching tokens', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Reset filters' }).click()
+  const copy = page.getByRole('button', { name: 'Copy --kv-duration-slow declaration' })
+  await copy.click()
+  await expect(copy).toHaveText('Copied')
+  if (browserName === 'chromium') {
+    await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toBe('--kv-duration-slow: 240ms;')
+  }
 })
 
 test('sidebar marks every public route and document titles follow navigation', async ({ page }) => {
@@ -226,8 +301,26 @@ for (const width of [320, 375]) {
     await page.keyboard.press('Escape')
     await page.getByRole('button', { name: 'Menu' }).click()
     await assertNoOverflow()
+
+    await page.goto('/#/tokens?section=explorer')
+    await expect(page.getByRole('complementary', { name: 'On this page' })).toBeVisible()
+    await page.getByRole('searchbox', { name: 'Filter tokens' }).fill('signal')
+    await expect(page.locator('.docs-token').first()).toBeVisible()
+    await assertNoOverflow()
   })
 }
+
+test('reduced motion keeps content immediate and removes non-essential docs and package transitions', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/#/')
+  await expect(page.locator('.docs-hero__copy')).toBeVisible()
+  await expect(page.locator('.docs-hero__copy')).toHaveCSS('animation-name', 'none')
+  await expect(page.locator('.docs-route-wipe')).toHaveCSS('display', 'none')
+  await page.goto('/#/components/dialog')
+  await page.getByRole('button', { name: 'Open dialog' }).click()
+  await expect(page.getByRole('dialog', { name: 'Review routing' })).toBeVisible()
+  await expect(page.locator('.kv-overlay')).toHaveCSS('transition-property', 'none')
+})
 
 test('opened mobile search and drawer have no critical axe violations', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 })
@@ -268,9 +361,21 @@ test('dialog traps focus, handles Escape, restores focus, and locks scroll', asy
   await expect(page.locator('html')).toHaveCSS('overflow', 'hidden')
   await expect(page.getByRole('button', { name: 'Close' })).toBeFocused()
   await page.keyboard.press('Escape')
+  const leavingState = await page.evaluate(() => ({
+    dialogPresent: Boolean(document.querySelector('[role="dialog"]')),
+    overflow: document.documentElement.style.overflow,
+  }))
+  expect(leavingState).toEqual({ dialogPresent: true, overflow: 'hidden' })
   await expect(dialog).toBeHidden()
   await expect(trigger).toBeFocused()
   await expect(page.locator('html')).not.toHaveCSS('overflow', 'hidden')
+})
+
+test('an opened package dialog has no critical axe violations', async ({ page }) => {
+  await page.goto('/#/components/dialog')
+  await page.getByRole('button', { name: 'Open dialog' }).click()
+  const results = await new AxeBuilder({ page }).analyze()
+  expect(results.violations.filter((violation) => violation.impact === 'critical')).toEqual([])
 })
 
 test('table emits state while toast announces feedback', async ({ page }) => {

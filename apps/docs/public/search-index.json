@@ -279,7 +279,7 @@
   {
     "title": "KvTooltip",
     "path": "/components/tooltip",
-    "text": "Overlays Delayed hover/focus description rendered through a safe teleport. text string delay number Focus — show Escape / Blur — hide",
+    "text": "Overlays Delayed hover/focus description forwarded directly to one required HTML trigger element. text string delay number Focus — show Escape / Blur — hide",
     "kind": "component",
     "category": "Overlays"
   },
@@ -307,7 +307,7 @@
   {
     "title": "KvAlert",
     "path": "/components/alert",
-    "text": "Feedback Inline neutral or status message with optional dismissal. status KvStatus ",
+    "text": "Feedback Inline visual status with explicit, opt-in live-region semantics and optional dismissal. status KvStatus announce 'off' | 'polite' | 'assertive' ",
     "kind": "component",
     "category": "Feedback"
   },

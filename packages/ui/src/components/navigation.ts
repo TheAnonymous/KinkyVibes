@@ -1,4 +1,4 @@
-import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, Teleport, type PropType } from 'vue'
+import { computed, defineComponent, h, nextTick, onBeforeUnmount, onMounted, ref, Teleport, Transition, type PropType } from 'vue'
 import { useKvControllable } from '../composables/useKvControllable'
 import { useKvId } from '../composables/useKvId'
 import { useKvPosition } from '../composables/useKvPosition'
@@ -55,10 +55,11 @@ export const KvTabs = defineComponent({
             }, item.label),
           ),
         ),
-        active && h('div', {
+        h(Transition, { name: 'kv-tab-motion', mode: 'out-in' }, () => active ? h('div', {
+          key: active.id,
           class: 'kv-tabs__panel', role: 'tabpanel', tabindex: 0,
           id: `${baseId.value}-panel-${active.id}`, 'aria-labelledby': `${baseId.value}-tab-${active.id}`,
-        }, slots[`panel-${active.id}`]?.({ item: active }) ?? slots.default?.({ item: active })),
+        }, slots[`panel-${active.id}`]?.({ item: active }) ?? slots.default?.({ item: active })) : null),
       ])
     }
   },
@@ -144,13 +145,25 @@ export const KvDropdownMenu = defineComponent({
     const menu = ref<HTMLElement | null>(null)
     const mounted = ref(false)
     const active = ref(0)
+    const restoreAfterLeave = ref(true)
     const placement = computed(() => props.placement)
     const { style, resolvedPlacement } = useKvPosition(trigger, menu, isOpen, placement)
     const close = (restore = true) => {
+      if (!isOpen.value) return
+      restoreAfterLeave.value = restore
       isOpen.value = false
-      if (restore) void nextTick(() => trigger.value?.focus())
     }
-    const focusActive = () => void nextTick(() => menu.value?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')[active.value]?.focus())
+    const firstEnabled = () => props.items.findIndex((item) => !item.disabled)
+    const lastEnabled = () => {
+      let index = props.items.length - 1
+      while (index >= 0 && props.items[index]?.disabled) index -= 1
+      return index
+    }
+    const focusActive = () => void nextTick(() => {
+      const item = menu.value?.querySelectorAll<HTMLButtonElement>('[role="menuitem"]')[active.value]
+      item?.focus()
+      item?.scrollIntoView({ block: 'nearest' })
+    })
     const move = (direction: 1 | -1) => {
       if (!props.items.some((item) => !item.disabled)) return
       do active.value = (active.value + direction + props.items.length) % props.items.length
@@ -161,8 +174,8 @@ export const KvDropdownMenu = defineComponent({
       if (event.key === 'Escape') { event.preventDefault(); close() }
       else if (event.key === 'ArrowDown') { event.preventDefault(); move(1) }
       else if (event.key === 'ArrowUp') { event.preventDefault(); move(-1) }
-      else if (event.key === 'Home') { event.preventDefault(); active.value = 0; focusActive() }
-      else if (event.key === 'End') { event.preventDefault(); active.value = props.items.length - 1; focusActive() }
+      else if (event.key === 'Home') { event.preventDefault(); active.value = firstEnabled(); focusActive() }
+      else if (event.key === 'End') { event.preventDefault(); active.value = lastEnabled(); focusActive() }
     }
     const select = (item: KvMenuItem) => {
       if (item.disabled) return
@@ -179,18 +192,32 @@ export const KvDropdownMenu = defineComponent({
       h('button', {
         ref: trigger, class: 'kv-dropdown__trigger', type: 'button', 'aria-label': props.triggerLabel,
         'aria-haspopup': 'menu', 'aria-expanded': isOpen.value,
-        onClick: () => { isOpen.value = !isOpen.value; if (isOpen.value) focusActive() },
+        onClick: () => {
+          if (isOpen.value) close(false)
+          else { restoreAfterLeave.value = true; isOpen.value = true; active.value = firstEnabled(); focusActive() }
+        },
         onKeydown: (event: KeyboardEvent) => {
-          if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); isOpen.value = true; active.value = event.key === 'ArrowDown' ? 0 : props.items.length - 1; focusActive() }
+          if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault()
+            restoreAfterLeave.value = true
+            isOpen.value = true
+            active.value = event.key === 'ArrowDown' ? firstEnabled() : lastEnabled()
+            focusActive()
+          }
         },
       }, slots.trigger?.() ?? props.triggerLabel),
-      isOpen.value && h(Teleport, { to: 'body', disabled: !mounted.value }, h('div', {
+      h(Teleport, { to: 'body', disabled: !mounted.value }, h(Transition, {
+        name: 'kv-menu-motion',
+        onAfterLeave: () => {
+          if (restoreAfterLeave.value) trigger.value?.focus({ preventScroll: true })
+        },
+      }, () => isOpen.value ? h('div', {
         ref: menu, class: 'kv-menu', role: 'menu', style: style.value, 'data-placement': resolvedPlacement.value, onKeydown,
       }, props.items.map((item, index) => h('button', {
         class: ['kv-menu__item', item.danger && 'kv-menu__item--danger'], type: 'button', role: 'menuitem',
         tabindex: index === active.value ? 0 : -1, disabled: item.disabled,
-        onPointerenter: () => { active.value = index }, onClick: () => select(item),
-      }, [item.icon && h(item.icon, { 'aria-hidden': 'true' }), item.label])))),
+        onPointerenter: () => { if (!item.disabled) active.value = index }, onClick: () => select(item),
+      }, [item.icon && h(item.icon, { 'aria-hidden': 'true' }), item.label]))) : null)),
     ])
   },
 })

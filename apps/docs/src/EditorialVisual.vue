@@ -22,6 +22,6 @@ defineProps<{
       loading="lazy"
       decoding="async"
     />
-    <figcaption><span>Field study</span>{{ label }}</figcaption>
+    <figcaption><span>Field study / 59.91N · 10.75E</span>{{ label }}</figcaption>
   </figure>
 </template>

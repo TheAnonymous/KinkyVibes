@@ -1,6 +1,6 @@
 {
   "name": "@kinky-vibes/ui",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Industrial-underground Vue 3 components with no UI runtime dependencies.",
   "license": "MIT",
   "type": "module",
@@ -45,7 +45,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/kinky-vibes/kinky-vibes.git",
+    "url": "https://github.com/TheAnonymous/KinkyVibes.git",
     "directory": "packages/ui"
   },
   "keywords": [

@@ -114,7 +114,7 @@ export default defineComponent({
         case 'KvPopover':
           return h(UI.KvPopover, { triggerLabel: 'Show details', placement: 'bottom-start' }, { trigger: () => 'Show details', default: () => h('p', { class: 'docs-popover-copy' }, 'Position flips and shifts inside the viewport.') })
         case 'KvTooltip':
-          return h(UI.KvTooltip, { text: 'Inspect channel metadata' }, () => h(UI.KvButton, { variant: 'secondary' }, () => 'Focus or hover'))
+          return h(UI.KvTooltip, { text: 'Inspect channel metadata' }, () => h('button', { class: 'kv-button kv-button--secondary kv-button--md', type: 'button' }, 'Focus or hover'))
         case 'KvCard':
           return h(UI.KvCard, { interactive: true }, { header: () => h(UI.KvBadge, { status: 'success', dot: true }, () => 'Stable'), default: () => [h(UI.KvHeading, { level: 4 }, () => 'Signal AX-17'), h(UI.KvText, { tone: 'muted' }, () => 'Nominal local output.')] })
         case 'KvAccordion':
