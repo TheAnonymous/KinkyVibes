@@ -5,7 +5,7 @@
   "description": "Industrial-underground Vue 3 component library and documentation workspace.",
   "license": "MIT",
   "type": "module",
-  "packageManager": "npm@12.0.0",
+  "packageManager": "npm@12.0.1",
   "engines": {
     "node": ">=22"
   },

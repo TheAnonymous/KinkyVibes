@@ -22,7 +22,7 @@ jobs:
           node-version: 22
           cache: npm
       - uses: actions/configure-pages@v5
-      - run: npm install --global npm@12.0.0
+      - run: npm install --global npm@12.0.1
       - run: npm ci
       - name: Set Pages base path
         shell: bash
