@@ -13,6 +13,18 @@ const assets = [
       [`${name}-960.webp`, 960, 720, 220],
       [`${name}-480.webp`, 480, 360, 90],
     ]),
+  ['system-field-1600.webp', 1600, 640, 320],
+  ['system-field-800.webp', 800, 320, 110],
+  ...['feature-css', 'feature-focus', 'feature-ssr']
+    .flatMap((name) => [
+      [`${name}-720.webp`, 720, 480, 160],
+      [`${name}-360.webp`, 360, 240, 55],
+    ]),
+  ...['page-accessibility', 'page-customization', 'page-installation', 'page-ssr', 'page-tokens']
+    .flatMap((name) => [
+      [`${name}-1200.webp`, 1200, 600, 280],
+      [`${name}-600.webp`, 600, 300, 100],
+    ]),
 ]
 
 function webpDimensions(buffer) {

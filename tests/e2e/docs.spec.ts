@@ -26,6 +26,16 @@ test('showcase assets load and every embedded component remains interactive', as
   await page.getByRole('button', { name: 'Advance' }).click()
   await expect(page.getByRole('progressbar', { name: 'Sequence pressure' })).toHaveAttribute('aria-valuenow', '76')
 
+  const landingEditorialImages = page.locator('[data-editorial-image]')
+  await expect(landingEditorialImages).toHaveCount(4)
+  for (const image of await landingEditorialImages.all()) {
+    await image.scrollIntoViewIfNeeded()
+    await expect(image).toHaveAttribute('loading', 'lazy')
+    await expect(image).toHaveAttribute('decoding', 'async')
+    await expect(image).toHaveAttribute('alt', '')
+    await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth)).toBeGreaterThan(0)
+  }
+
   await page.goto('/#/components')
   const categoryImages = page.locator('[data-showcase-scene] [data-showcase-image]')
   await expect(categoryImages).toHaveCount(7)
@@ -64,6 +74,33 @@ test('showcase assets load and every embedded component remains interactive', as
   await feedbackScene.getByRole('button', { name: 'Dismiss' }).click()
   await expect(feedbackScene.locator('.kv-alert')).toBeHidden()
   await expect(feedbackScene.getByRole('button', { name: 'Restore alert' })).toBeVisible()
+
+  const editorialPages = [
+    ['/#/installation', 'page-installation'],
+    ['/#/tokens', 'page-tokens'],
+    ['/#/guides/ssr', 'page-ssr'],
+    ['/#/guides/customization', 'page-customization'],
+    ['/#/accessibility', 'page-accessibility'],
+  ] as const
+  for (const [path, marker] of editorialPages) {
+    await page.goto(path)
+    const image = page.locator(`[data-editorial-image="${marker}"]`)
+    await image.scrollIntoViewIfNeeded()
+    await expect(image).toHaveAttribute('loading', 'lazy')
+    await expect(image).toHaveAttribute('decoding', 'async')
+    await expect(image).toHaveAttribute('alt', '')
+    await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth)).toBeGreaterThan(0)
+  }
+})
+
+test('editorial pages stay within the compact viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  for (const path of ['/#/installation', '/#/tokens', '/#/guides/ssr', '/#/guides/customization', '/#/accessibility']) {
+    await page.goto(path)
+    await page.locator('[data-editorial-image]').scrollIntoViewIfNeeded()
+    const width = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }))
+    expect(width.scroll).toBeLessThanOrEqual(width.client + 1)
+  }
 })
 
 test('responsive navigation opens without horizontal page overflow', async ({ page }) => {
@@ -123,7 +160,7 @@ test('table emits state while toast announces feedback', async ({ page }) => {
   await expect(page.getByRole('status')).toContainText('Signal stored')
 })
 
-for (const path of ['/#/', '/#/components', '/#/components/dialog', '/#/components/field']) {
+for (const path of ['/#/', '/#/components', '/#/components/dialog', '/#/components/field', '/#/accessibility']) {
   test(`representative page ${path} has no critical axe violations`, async ({ page }) => {
     await page.goto(path)
     const results = await new AxeBuilder({ page }).analyze()

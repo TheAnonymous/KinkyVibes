@@ -16,8 +16,10 @@ import {
 } from '@kinky-vibes/ui'
 import { KvSearchIcon } from '@kinky-vibes/ui/icons'
 import ComponentPreview from './ComponentPreview'
+import EditorialVisual from './EditorialVisual.vue'
 import ShowcasePreview from './ShowcasePreview.vue'
 import { categories, componentDocs, type ComponentDoc } from './catalog'
+import { featureStories, pageVisuals, systemFieldImage } from './editorial'
 import { heroImage, showcaseScenes } from './showcase'
 
 interface SearchEntry { title: string; path: string; text: string }
@@ -201,13 +203,40 @@ function advanceSequence() {
             <div><strong>03</strong><span>SSR smoke layers</span></div>
             <div><strong>01</strong><span>Dark theme</span></div>
           </section>
+          <figure class="docs-system-field">
+            <img
+              class="docs-showcase-image docs-system-field__image"
+              data-editorial-image="system-field"
+              :src="systemFieldImage.src"
+              :srcset="systemFieldImage.srcset"
+              sizes="(max-width: 64rem) 100vw, calc(100vw - 17.5rem)"
+              :width="systemFieldImage.width"
+              :height="systemFieldImage.height"
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+            <figcaption><span>Field / 00</span><strong>One system. Every layer.</strong></figcaption>
+          </figure>
           <KvContainer size="md">
             <section class="docs-section">
               <KvHeading eyebrow="System / 01">Built as infrastructure</KvHeading>
               <div class="docs-feature-grid">
-                <article><span>FOCUS</span><h3>Interaction owned locally</h3><p>Focus traps, restoration, scroll lock, keyboard movement, and viewport positioning ship inside the package.</p></article>
-                <article><span>SSR</span><h3>Server first</h3><p>Vue useId keeps identifiers deterministic. Browser APIs wait for mount, while teleports hydrate in place.</p></article>
-                <article><span>CSS</span><h3>Stable surface contract</h3><p>Override documented --kv-* tokens or target stable kv-* classes. The standard look remains tree-shakeable.</p></article>
+                <article v-for="feature in featureStories" :key="feature.code">
+                  <img
+                    class="docs-showcase-image docs-feature-image"
+                    :data-editorial-image="feature.slug"
+                    :src="feature.image.src"
+                    :srcset="feature.image.srcset"
+                    sizes="(max-width: 64rem) calc(100vw - 3rem), 16rem"
+                    :width="feature.image.width"
+                    :height="feature.image.height"
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                  />
+                  <div class="docs-feature-grid__body"><span>{{ feature.code }}</span><h3>{{ feature.title }}</h3><p>{{ feature.description }}</p></div>
+                </article>
               </div>
             </section>
           </KvContainer>
@@ -217,6 +246,7 @@ function advanceSequence() {
           <article class="docs-article">
             <KvHeading :level="1" eyebrow="Start / 01">Installation</KvHeading>
             <KvText size="lg" tone="muted">Vue is the only peer. Import the complete dark theme once at the application boundary.</KvText>
+            <EditorialVisual :image="pageVisuals.installation" marker="page-installation" label="Module / load path" />
             <h2>Package</h2>
             <KvCode block>npm install @kinky-vibes/ui vue</KvCode>
             <h2>Named imports</h2>
@@ -236,6 +266,7 @@ createApp(App).use(KinkyVibes).mount('#app')</KvCode>
           <article class="docs-article">
             <KvHeading :level="1" eyebrow="Theme / 01">Token explorer</KvHeading>
             <KvText size="lg" tone="muted">Every supported theme boundary uses the --kv-* namespace. Import tokens.css alone when the default component styling is not required.</KvText>
+            <EditorialVisual :image="pageVisuals.tokens" marker="page-tokens" label="Material / token matrix" />
             <div class="docs-token-grid">
               <div v-for="token in tokens" :key="token[0]" class="docs-token">
                 <span class="docs-token__swatch" :style="{ background: token[1] }"></span>
@@ -319,6 +350,7 @@ createApp(App).use(KinkyVibes).mount('#app')</KvCode>
           <article class="docs-article">
             <KvHeading :level="1" eyebrow="Guide / SSR">Vue SSR & Nuxt</KvHeading>
             <KvText size="lg" tone="muted">All modules can be imported without a DOM. IDs use Vue’s hydration-aware useId, and browser observers attach only after mount.</KvText>
+            <EditorialVisual :image="pageVisuals.ssr" marker="page-ssr" label="Boundary / aligned output" />
             <h2>Nuxt plugin</h2>
             <KvCode block>// plugins/kinky-vibes.ts
 import { KinkyVibes } from '@kinky-vibes/ui'
@@ -337,6 +369,7 @@ export default defineNuxtPlugin((nuxtApp) =&gt; {
           <article class="docs-article">
             <KvHeading :level="1" eyebrow="Guide / Theme">Customization</KvHeading>
             <KvText size="lg" tone="muted">KinkyVibes remains a single dark theme. Customize emphasis and rhythm by overriding tokens rather than branching into theme modes.</KvText>
+            <EditorialVisual :image="pageVisuals.customization" marker="page-customization" label="Surface / controlled override" />
             <h2>Scoped overrides</h2>
             <KvCode block>&lt;KvProvider :tokens="{
   '--kv-color-signal': '#ff4d00',
@@ -357,6 +390,7 @@ export default defineNuxtPlugin((nuxtApp) =&gt; {
           <article class="docs-article">
             <KvHeading :level="1" eyebrow="Quality / A11Y">Accessibility</KvHeading>
             <KvText size="lg" tone="muted">Semantics, keyboard behavior, focus visibility, reduced motion, and live regions are tested as engineering requirements.</KvText>
+            <EditorialVisual :image="pageVisuals.accessibility" marker="page-accessibility" label="Control / differentiated state" />
             <h2>Manual checklist</h2>
             <ul class="docs-checklist"><li>Complete every interactive example with keyboard only.</li><li>Confirm focus remains visible against all surfaces.</li><li>Verify dialog focus enters, cycles, and returns to the trigger.</li><li>Review labels, descriptions, errors, and live updates in NVDA, VoiceOver, or Orca.</li><li>Zoom to 200% at 375px and confirm no two-dimensional page overflow.</li><li>Enable reduced motion and verify non-essential transitions collapse.</li></ul>
             <div class="docs-callout"><strong>Scope statement</strong><p>Automated axe checks on representative pages must report no critical violations. This evidence is best effort and is not a formal WCAG conformance declaration.</p></div>

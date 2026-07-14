@@ -3,7 +3,7 @@ import { expect, test } from '@playwright/test'
 test.skip(({ browserName }) => browserName !== 'chromium', 'Visual baselines use Chromium for deterministic rasterization.')
 
 async function loadShowcaseImages(page: import('@playwright/test').Page) {
-  const images = page.locator('[data-showcase-image]')
+  const images = page.locator('[data-showcase-image], [data-editorial-image]')
   for (const image of await images.all()) {
     await image.scrollIntoViewIfNeeded()
     await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth)).toBeGreaterThan(0)
@@ -34,6 +34,25 @@ test('component showcase is stable at desktop and compact widths', async ({ page
   await page.reload()
   await loadShowcaseImages(page)
   await expect(page).toHaveScreenshot('components-375.png', { fullPage: true })
+})
+
+test('editorial page visuals remain stable', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  const pages = [
+    ['/#/installation', 'installation'],
+    ['/#/tokens', 'tokens'],
+    ['/#/guides/ssr', 'ssr'],
+    ['/#/guides/customization', 'customization'],
+    ['/#/accessibility', 'accessibility'],
+  ] as const
+
+  for (const [path, name] of pages) {
+    await page.goto(path)
+    const visual = page.locator('.docs-page-visual')
+    await visual.locator('img').scrollIntoViewIfNeeded()
+    await expect.poll(() => visual.locator('img').evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth)).toBeGreaterThan(0)
+    await expect(visual).toHaveScreenshot(`page-${name}-visual.png`)
+  }
 })
 
 test('button states and open overlay remain stable', async ({ page }) => {

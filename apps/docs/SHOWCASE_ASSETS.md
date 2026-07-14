@@ -1,10 +1,10 @@
 # Showcase image sources
 
-The documentation showcase uses eight images generated with the built-in Imagegen tool. The generated PNG sources remain outside the repository under:
+The documentation showcase uses seventeen images generated with the built-in Imagegen tool. The generated PNG sources remain outside the repository under:
 
 `/home/jodie/.codex/generated_images/019f5d5e-a188-7580-8847-dfd2ea4029ad/`
 
-Only stripped, responsive WebP derivatives are stored in `src/assets/showcase/`. Hero derivatives are 1600×1000 and 800×500; category derivatives are 960×720 and 480×360. `npm run check:assets` verifies the complete set, dimensions, budgets, WebP structure, absence of ICC/EXIF/XMP chunks, and the public SVG favicon.
+Only stripped, responsive WebP derivatives are stored in `src/assets/showcase/`. The repository contains 34 final WebPs: two for each source image. `npm run check:assets` verifies the complete set, dimensions, budgets, WebP structure, absence of ICC/EXIF/XMP chunks, and the public SVG favicon.
 
 ## Final prompts and selected sources
 
@@ -49,3 +49,50 @@ Every prompt shared these constraints: photorealistic editorial industrial photo
 
 - Source: `exec-dd187de2-cca4-4049-9b04-559b58b1848f.png`
 - Prompt: Compact group of red, amber-yellow and cool blue industrial signal lamps mounted on a heavy matte black steel plate. Landscape 4:3, straight-on three-quarter view; real ribbed optical glass, machined bezels, bolts and powder-coat patina.
+
+## Extended editorial set
+
+### System field
+
+- Source: `exec-4beff345-d4ab-4423-adc6-96acf6127510.png`
+- Prompt: Vast empty industrial floor crossed by a precise black steel service bridge, embedded cable channels and a distant red signal beacon. Very wide 5:2 crop, low symmetrical camera, strong central vanishing point; raw concrete, blackened steel, rubber cable and worn powder coat.
+
+### Feature / Focus
+
+- Source: `exec-dd2ece41-3cca-4ff8-92a0-edd7c73ba1a9.png`
+- Prompt: Precision mechanical aperture made from concentric blackened steel rings, locking clamps and one illuminated yellow focus ring. Landscape 3:2 macro composition with a restrained red reflection and authentic machining marks.
+
+### Feature / SSR
+
+- Source: `exec-84815edb-cb6f-4d13-b313-a1470746fac0.png`
+- Prompt: Two interlocking black steel coupling frames aligned across a razor-thin mirrored seam, suggesting identical structure on both sides of a boundary. Landscape 3:2, close three-quarter view with hard cool rim light and a faint red alignment glow.
+
+### Feature / CSS
+
+- Source: `exec-de38d211-94c3-4ae0-aebe-4c174c78a889.png`
+- Prompt: Layered punched steel sheets, black rubber membranes and fine metal mesh joined by a single red lacquered seam. Landscape 3:2, low oblique macro view with hard grazing light and a clearly stepped material profile.
+
+### Page / Installation
+
+- Source: `exec-4e641760-b121-4656-86dd-18e27a465359.png`
+- Prompt: Sealed modular black transport case sliding into heavy steel guide rails, secured by mechanical latches and one red locking tab. Wide 2:1 crop, low three-quarter angle in an empty concrete loading bay.
+
+### Page / Tokens
+
+- Source: `exec-89309adb-e11b-4b56-9504-64ec81c321b6.png`
+- Prompt: Rigorous material sample library of black rubber, raw concrete, blackened steel, bone ceramic, smoked glass and one signal-red lacquer plate. Wide 2:1, near top-down view with repeated modules and tactile surface detail.
+
+### Page / SSR
+
+- Source: `exec-86d2d337-9212-4028-856e-eb2a26f2f840.png`
+- Prompt: Long concrete passage with two perfectly aligned black steel portal frames separated by a smoked-glass boundary. Wide 2:1 one-point perspective with repeated anchors and a red alignment light at the vanishing point.
+
+### Page / Customization
+
+- Source: `exec-44d92fbb-2294-49bc-93b1-a73803bc7def.png`
+- Prompt: Interchangeable blank steel and rubber plates on a modular mounting bed, with one red lacquer plate raised above the charcoal set. Wide 2:1 oblique overhead view with crisp shadows and precision spacers.
+
+### Page / Accessibility
+
+- Source: `exec-83f93a21-0231-4ff4-9e81-bbc31ddd3581.png`
+- Prompt: Row of differentiated tactile controls with generous spacing, a yellow focus ring around one control, and separated red and blue status lamps. Wide 2:1, crisp hard light, readable edges and controlled shadows.
