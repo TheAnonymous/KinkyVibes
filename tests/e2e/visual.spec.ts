@@ -25,15 +25,37 @@ test('landing is stable at desktop and compact widths', async ({ page }) => {
 })
 
 test('component showcase is stable at desktop and compact widths', async ({ page }) => {
+  await page.addInitScript(`window.IntersectionObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() { return [] }
+  }`)
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/#/components')
   await loadShowcaseImages(page)
-  await expect(page).toHaveScreenshot('components-1440.png', { fullPage: true })
+  await expect(page).toHaveScreenshot('components-1440.png')
 
   await page.setViewportSize({ width: 375, height: 812 })
   await page.reload()
   await loadShowcaseImages(page)
-  await expect(page).toHaveScreenshot('components-375.png', { fullPage: true })
+  await expect(page).toHaveScreenshot('components-375.png')
+})
+
+test('component detail and opened mobile shell states remain stable', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/#/components/button')
+  await expect(page).toHaveScreenshot('component-detail-1440.png', { fullPage: true })
+
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto('/#/components')
+  await page.getByRole('button', { name: 'Menu' }).click()
+  await expect(page).toHaveScreenshot('mobile-navigation-open-375.png')
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Search documentation' }).click()
+  await page.getByRole('dialog', { name: 'Search documentation' }).getByRole('combobox').fill('button')
+  await expect(page.getByRole('option', { name: /KvButton/ }).first()).toBeVisible()
+  await expect(page).toHaveScreenshot('mobile-search-open-375.png')
 })
 
 test('editorial page visuals remain stable', async ({ page }) => {

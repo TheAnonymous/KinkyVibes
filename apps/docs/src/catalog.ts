@@ -91,11 +91,11 @@ export const componentDocs: ComponentDoc[] = [
 export const categories = [...new Set(componentDocs.map((entry) => entry.category))]
 
 export const staticPages = [
-  { title: 'Introduction', path: '/', text: 'Industrial-underground Vue 3 design system' },
-  { title: 'Installation', path: '/installation', text: 'Install plugin named imports styles package' },
-  { title: 'Tokens', path: '/tokens', text: 'CSS variables colors spacing typography customization' },
-  { title: 'Components', path: '/components', text: 'All component categories and public APIs' },
-  { title: 'SSR & Nuxt', path: '/guides/ssr', text: 'Server rendering hydration Nuxt imports teleports' },
-  { title: 'Customization', path: '/guides/customization', text: 'Token overrides stable classes dark theme' },
-  { title: 'Accessibility', path: '/accessibility', text: 'Keyboard screen reader checklist best effort axe' },
+  { title: 'Introduction', path: '/', text: 'Industrial-underground Vue 3 design system', kind: 'page' as const },
+  { title: 'Installation', path: '/installation', text: 'Install plugin named imports styles package', kind: 'page' as const },
+  { title: 'Tokens', path: '/tokens', text: 'CSS variables colors spacing typography customization', kind: 'page' as const },
+  { title: 'Components', path: '/components', text: 'All component categories and public APIs', kind: 'page' as const, category: 'Reference' },
+  { title: 'SSR & Nuxt', path: '/guides/ssr', text: 'Server rendering hydration Nuxt imports teleports', kind: 'page' as const, category: 'Guides' },
+  { title: 'Customization', path: '/guides/customization', text: 'Token overrides stable classes dark theme', kind: 'page' as const, category: 'Guides' },
+  { title: 'Accessibility', path: '/accessibility', text: 'Keyboard screen reader checklist best effort axe', kind: 'page' as const, category: 'Quality' },
 ]

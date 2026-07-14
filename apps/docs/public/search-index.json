@@ -2,256 +2,355 @@
   {
     "title": "Introduction",
     "path": "/",
-    "text": "Industrial-underground Vue 3 design system"
+    "text": "Industrial-underground Vue 3 design system",
+    "kind": "page"
   },
   {
     "title": "Installation",
     "path": "/installation",
-    "text": "Install plugin named imports styles package"
+    "text": "Install plugin named imports styles package",
+    "kind": "page"
   },
   {
     "title": "Tokens",
     "path": "/tokens",
-    "text": "CSS variables colors spacing typography customization"
+    "text": "CSS variables colors spacing typography customization",
+    "kind": "page"
   },
   {
     "title": "Components",
     "path": "/components",
-    "text": "All component categories and public APIs"
+    "text": "All component categories and public APIs",
+    "kind": "page",
+    "category": "Reference"
   },
   {
     "title": "SSR & Nuxt",
     "path": "/guides/ssr",
-    "text": "Server rendering hydration Nuxt imports teleports"
+    "text": "Server rendering hydration Nuxt imports teleports",
+    "kind": "page",
+    "category": "Guides"
   },
   {
     "title": "Customization",
     "path": "/guides/customization",
-    "text": "Token overrides stable classes dark theme"
+    "text": "Token overrides stable classes dark theme",
+    "kind": "page",
+    "category": "Guides"
   },
   {
     "title": "Accessibility",
     "path": "/accessibility",
-    "text": "Keyboard screen reader checklist best effort axe"
+    "text": "Keyboard screen reader checklist best effort axe",
+    "kind": "page",
+    "category": "Quality"
   },
   {
     "title": "KvProvider",
     "path": "/components/provider",
-    "text": "Foundations Establishes tokens, typography, grain, and a local override boundary. tokens Record<string, string> grain boolean "
+    "text": "Foundations Establishes tokens, typography, grain, and a local override boundary. tokens Record<string, string> grain boolean ",
+    "kind": "component",
+    "category": "Foundations"
   },
   {
     "title": "KvContainer",
     "path": "/components/container",
-    "text": "Foundations Constrains page content to a readable responsive measure. size 'sm' | 'md' | 'lg' | 'full' "
+    "text": "Foundations Constrains page content to a readable responsive measure. size 'sm' | 'md' | 'lg' | 'full' ",
+    "kind": "component",
+    "category": "Foundations"
   },
   {
     "title": "KvStack",
     "path": "/components/stack",
-    "text": "Foundations Arranges children vertically with tokenized spacing. gap 'xs' | 'sm' | 'md' | 'lg' | 'xl' "
+    "text": "Foundations Arranges children vertically with tokenized spacing. gap 'xs' | 'sm' | 'md' | 'lg' | 'xl' ",
+    "kind": "component",
+    "category": "Foundations"
   },
   {
     "title": "KvCluster",
     "path": "/components/cluster",
-    "text": "Foundations Wraps related controls and content on a horizontal axis. justify 'start' | 'center' | 'end' | 'between' "
+    "text": "Foundations Wraps related controls and content on a horizontal axis. justify 'start' | 'center' | 'end' | 'between' ",
+    "kind": "component",
+    "category": "Foundations"
   },
   {
     "title": "KvGrid",
     "path": "/components/grid",
-    "text": "Foundations Creates an auto-fitting responsive grid without breakpoint props. min string "
+    "text": "Foundations Creates an auto-fitting responsive grid without breakpoint props. min string ",
+    "kind": "component",
+    "category": "Foundations"
   },
   {
     "title": "KvDivider",
     "path": "/components/divider",
-    "text": "Foundations Separates regions visually and semantically. orientation 'horizontal' | 'vertical' "
+    "text": "Foundations Separates regions visually and semantically. orientation 'horizontal' | 'vertical' ",
+    "kind": "component",
+    "category": "Foundations"
   },
   {
     "title": "KvVisuallyHidden",
     "path": "/components/visually-hidden",
-    "text": "Foundations Keeps accessible text available without visual layout. focusable boolean "
+    "text": "Foundations Keeps accessible text available without visual layout. focusable boolean ",
+    "kind": "component",
+    "category": "Foundations"
   },
   {
     "title": "KvHeading",
     "path": "/components/heading",
-    "text": "Foundations Industrial condensed display heading with valid semantic levels. level 1 | 2 | 3 | 4 | 5 | 6 eyebrow string "
+    "text": "Foundations Industrial condensed display heading with valid semantic levels. level 1 | 2 | 3 | 4 | 5 | 6 eyebrow string ",
+    "kind": "component",
+    "category": "Foundations"
   },
   {
     "title": "KvText",
     "path": "/components/text",
-    "text": "Foundations Body copy with size and tone controls. tone 'default' | 'muted' | 'signal' "
+    "text": "Foundations Body copy with size and tone controls. tone 'default' | 'muted' | 'signal' ",
+    "kind": "component",
+    "category": "Foundations"
   },
   {
     "title": "KvLink",
     "path": "/components/link",
-    "text": "Foundations A high-contrast text link with external-link safety. href string external boolean "
+    "text": "Foundations A high-contrast text link with external-link safety. href string external boolean ",
+    "kind": "component",
+    "category": "Foundations"
   },
   {
     "title": "KvCode",
     "path": "/components/code",
-    "text": "Foundations Inline or block monospace technical content. block boolean "
+    "text": "Foundations Inline or block monospace technical content. block boolean ",
+    "kind": "component",
+    "category": "Foundations"
   },
   {
     "title": "KvButton",
     "path": "/components/button",
-    "text": "Actions Primary action with variants, sizes, loading, and slot affordances. size KvSize variant KvVariant loading boolean Enter / Space — activate"
+    "text": "Actions Primary action with variants, sizes, loading, and slot affordances. size KvSize variant KvVariant loading boolean Enter / Space — activate",
+    "kind": "component",
+    "category": "Actions"
   },
   {
     "title": "KvIconButton",
     "path": "/components/icon-button",
-    "text": "Actions Square icon-only action that requires an accessible label. label string size KvSize Enter / Space — activate"
+    "text": "Actions Square icon-only action that requires an accessible label. label string size KvSize Enter / Space — activate",
+    "kind": "component",
+    "category": "Actions"
   },
   {
     "title": "KvButtonGroup",
     "path": "/components/button-group",
-    "text": "Actions Labels and groups related actions. label string attached boolean "
+    "text": "Actions Labels and groups related actions. label string attached boolean ",
+    "kind": "component",
+    "category": "Actions"
   },
   {
     "title": "KvField",
     "path": "/components/field",
-    "text": "Forms Connects label, description, error, required state, and input IDs automatically. label string description string error string "
+    "text": "Forms Connects label, description, error, required state, and input IDs automatically. label string description string error string ",
+    "kind": "component",
+    "category": "Forms"
   },
   {
     "title": "KvInput",
     "path": "/components/input",
-    "text": "Forms Textual and native date/time input types with controlled or default state. modelValue varies size KvSize type text | email | password | search | number | date | time | datetime-local | … "
+    "text": "Forms Textual and native date/time input types with controlled or default state. modelValue varies size KvSize type text | email | password | search | number | date | time | datetime-local | … ",
+    "kind": "component",
+    "category": "Forms"
   },
   {
     "title": "KvTextarea",
     "path": "/components/textarea",
-    "text": "Forms Multiline text entry with consumer-controlled validation. modelValue varies rows number "
+    "text": "Forms Multiline text entry with consumer-controlled validation. modelValue varies rows number ",
+    "kind": "component",
+    "category": "Forms"
   },
   {
     "title": "KvSelect",
     "path": "/components/select",
-    "text": "Forms Styled semantic native select retaining platform keyboard behavior. modelValue varies options KvSelectOption[] Arrow keys — move Home / End — first or last Enter — commit on supported platforms"
+    "text": "Forms Styled semantic native select retaining platform keyboard behavior. modelValue varies options KvSelectOption[] Arrow keys — move Home / End — first or last Enter — commit on supported platforms",
+    "kind": "component",
+    "category": "Forms"
   },
   {
     "title": "KvCombobox",
     "path": "/components/combobox",
-    "text": "Forms Filterable listbox with complete active-option keyboard handling. modelValue varies options KvComboboxOption[] Arrow Up / Down — move Home / End — first or last Enter — select Escape — close"
+    "text": "Forms Filterable listbox with complete active-option keyboard handling. modelValue varies options KvComboboxOption[] Arrow Up / Down — move Home / End — first or last Enter — select Escape — close",
+    "kind": "component",
+    "category": "Forms"
   },
   {
     "title": "KvCheckbox",
     "path": "/components/checkbox",
-    "text": "Forms Boolean or indeterminate choice with label and description. modelValue varies indeterminate boolean Space — toggle"
+    "text": "Forms Boolean or indeterminate choice with label and description. modelValue varies indeterminate boolean Space — toggle",
+    "kind": "component",
+    "category": "Forms"
   },
   {
     "title": "KvRadioGroup",
     "path": "/components/radio-group",
-    "text": "Forms Named native radio set in a semantic fieldset. modelValue varies options KvSelectOption[] Arrow keys — move and select Space — select"
+    "text": "Forms Named native radio set in a semantic fieldset. modelValue varies options KvSelectOption[] Arrow keys — move and select Space — select",
+    "kind": "component",
+    "category": "Forms"
   },
   {
     "title": "KvSwitch",
     "path": "/components/switch",
-    "text": "Forms Immediate boolean setting using the switch role. modelValue varies label string Space / Enter — toggle"
+    "text": "Forms Immediate boolean setting using the switch role. modelValue varies label string Space / Enter — toggle",
+    "kind": "component",
+    "category": "Forms"
   },
   {
     "title": "KvSlider",
     "path": "/components/slider",
-    "text": "Forms Native range control with signal progress and optional value output. modelValue varies min / max / step number Arrow keys — adjust one step Page Up / Down — larger adjustment Home / End — limits"
+    "text": "Forms Native range control with signal progress and optional value output. modelValue varies min / max / step number Arrow keys — adjust one step Page Up / Down — larger adjustment Home / End — limits",
+    "kind": "component",
+    "category": "Forms"
   },
   {
     "title": "KvFileInput",
     "path": "/components/file-input",
-    "text": "Forms Styled native file picker that emits a stable File array. accept string multiple boolean Enter / Space — open system picker"
+    "text": "Forms Styled native file picker that emits a stable File array. accept string multiple boolean Enter / Space — open system picker",
+    "kind": "component",
+    "category": "Forms"
   },
   {
     "title": "KvTabs",
     "path": "/components/tabs",
-    "text": "Navigation Automatic-activation tab set with horizontal or vertical orientation. modelValue varies items KvTabItem[] Arrow keys — select adjacent tab Home / End — first or last tab"
+    "text": "Navigation Automatic-activation tab set with horizontal or vertical orientation. modelValue varies items KvTabItem[] Arrow keys — select adjacent tab Home / End — first or last tab",
+    "kind": "component",
+    "category": "Navigation"
   },
   {
     "title": "KvBreadcrumbs",
     "path": "/components/breadcrumbs",
-    "text": "Navigation Semantic path navigation with a current-page marker. items KvBreadcrumbItem[] "
+    "text": "Navigation Semantic path navigation with a current-page marker. items KvBreadcrumbItem[] ",
+    "kind": "component",
+    "category": "Navigation"
   },
   {
     "title": "KvPagination",
     "path": "/components/pagination",
-    "text": "Navigation Controlled or default pagination with bounded page updates. modelValue varies total number pageSize number "
+    "text": "Navigation Controlled or default pagination with bounded page updates. modelValue varies total number pageSize number ",
+    "kind": "component",
+    "category": "Navigation"
   },
   {
     "title": "KvSteps",
     "path": "/components/steps",
-    "text": "Navigation Read-only ordered process indicator. items KvStep[] current number | string "
+    "text": "Navigation Read-only ordered process indicator. items KvStep[] current number | string ",
+    "kind": "component",
+    "category": "Navigation"
   },
   {
     "title": "KvDropdownMenu",
     "path": "/components/dropdown-menu",
-    "text": "Navigation Positioned action menu with roving focus and outside handling. open boolean items KvMenuItem[] placement KvPlacement Arrow Up / Down — move Home / End — first or last Enter / Space — invoke Escape — close and restore focus"
+    "text": "Navigation Positioned action menu with roving focus and outside handling. open boolean items KvMenuItem[] placement KvPlacement Arrow Up / Down — move Home / End — first or last Enter / Space — invoke Escape — close and restore focus",
+    "kind": "component",
+    "category": "Navigation"
   },
   {
     "title": "KvDialog",
     "path": "/components/dialog",
-    "text": "Overlays Modal surface with focus trap, restoration, Escape, outside handling, and scroll lock. open boolean title string closeOnOutside boolean Tab / Shift+Tab — cycle inside Escape — close and restore focus"
+    "text": "Overlays Modal surface with focus trap, restoration, Escape, outside handling, and scroll lock. open boolean title string closeOnOutside boolean Tab / Shift+Tab — cycle inside Escape — close and restore focus",
+    "kind": "component",
+    "category": "Overlays"
   },
   {
     "title": "KvAlertDialog",
     "path": "/components/alert-dialog",
-    "text": "Overlays Interruptive confirmation surface with initial cancel focus. open boolean destructive boolean Tab / Shift+Tab — cycle inside Escape — cancel and restore focus"
+    "text": "Overlays Interruptive confirmation surface with initial cancel focus. open boolean destructive boolean Tab / Shift+Tab — cycle inside Escape — cancel and restore focus",
+    "kind": "component",
+    "category": "Overlays"
   },
   {
     "title": "KvDrawer",
     "path": "/components/drawer",
-    "text": "Overlays Edge-mounted modal panel sharing the dialog focus contract. open boolean side 'left' | 'right' Tab / Shift+Tab — cycle inside Escape — close and restore focus"
+    "text": "Overlays Edge-mounted modal panel sharing the dialog focus contract. open boolean side 'left' | 'right' Tab / Shift+Tab — cycle inside Escape — close and restore focus",
+    "kind": "component",
+    "category": "Overlays"
   },
   {
     "title": "KvPopover",
     "path": "/components/popover",
-    "text": "Overlays Non-modal positioned content with flip, shift, outside, and Escape handling. open boolean placement KvPlacement Escape — close and restore focus"
+    "text": "Overlays Non-modal positioned content with flip, shift, outside, and Escape handling. open boolean placement KvPlacement Escape — close and restore focus",
+    "kind": "component",
+    "category": "Overlays"
   },
   {
     "title": "KvTooltip",
     "path": "/components/tooltip",
-    "text": "Overlays Delayed hover/focus description rendered through a safe teleport. text string delay number Focus — show Escape / Blur — hide"
+    "text": "Overlays Delayed hover/focus description rendered through a safe teleport. text string delay number Focus — show Escape / Blur — hide",
+    "kind": "component",
+    "category": "Overlays"
   },
   {
     "title": "KvCard",
     "path": "/components/card",
-    "text": "Data & Disclosure Steel surface for grouped, optionally interactive content. padding 'none' | 'sm' | 'md' | 'lg' "
+    "text": "Data & Disclosure Steel surface for grouped, optionally interactive content. padding 'none' | 'sm' | 'md' | 'lg' ",
+    "kind": "component",
+    "category": "Data & Disclosure"
   },
   {
     "title": "KvAccordion",
     "path": "/components/accordion",
-    "text": "Data & Disclosure Single or multi-open disclosure regions using semantic heading buttons. modelValue varies items KvAccordionItem[] multiple boolean Enter / Space — toggle panel"
+    "text": "Data & Disclosure Single or multi-open disclosure regions using semantic heading buttons. modelValue varies items KvAccordionItem[] multiple boolean Enter / Space — toggle panel",
+    "kind": "component",
+    "category": "Data & Disclosure"
   },
   {
     "title": "KvTable",
     "path": "/components/table",
-    "text": "Data & Disclosure Semantic typed table with controlled sorting and row selection; data transforms stay consumer-owned. items T[] columns KvTableColumn<T>[] rowKey keyof T | (item: T) => string | number sort KvSortState selectedKeys (string | number)[] Enter / Space — sort header or toggle checkbox"
+    "text": "Data & Disclosure Semantic typed table with controlled sorting and row selection; data transforms stay consumer-owned. items T[] columns KvTableColumn<T>[] rowKey keyof T | (item: T) => string | number sort KvSortState selectedKeys (string | number)[] Enter / Space — sort header or toggle checkbox",
+    "kind": "component",
+    "category": "Data & Disclosure"
   },
   {
     "title": "KvAlert",
     "path": "/components/alert",
-    "text": "Feedback Inline neutral or status message with optional dismissal. status KvStatus "
+    "text": "Feedback Inline neutral or status message with optional dismissal. status KvStatus ",
+    "kind": "component",
+    "category": "Feedback"
   },
   {
     "title": "KvBadge",
     "path": "/components/badge",
-    "text": "Feedback Compact status or metadata label. status KvStatus dot boolean "
+    "text": "Feedback Compact status or metadata label. status KvStatus dot boolean ",
+    "kind": "component",
+    "category": "Feedback"
   },
   {
     "title": "KvProgress",
     "path": "/components/progress",
-    "text": "Feedback Determinate or indeterminate progress with an accessible label. value number | undefined max number "
+    "text": "Feedback Determinate or indeterminate progress with an accessible label. value number | undefined max number ",
+    "kind": "component",
+    "category": "Feedback"
   },
   {
     "title": "KvSpinner",
     "path": "/components/spinner",
-    "text": "Feedback Compact mechanical loading indicator with status text. label string size KvSize "
+    "text": "Feedback Compact mechanical loading indicator with status text. label string size KvSize ",
+    "kind": "component",
+    "category": "Feedback"
   },
   {
     "title": "KvSkeleton",
     "path": "/components/skeleton",
-    "text": "Feedback Non-semantic placeholder for nearby loading state. width / height string "
+    "text": "Feedback Non-semantic placeholder for nearby loading state. width / height string ",
+    "kind": "component",
+    "category": "Feedback"
   },
   {
     "title": "KvEmptyState",
     "path": "/components/empty-state",
-    "text": "Feedback Centered no-content state with icon and action slots. title string description string "
+    "text": "Feedback Centered no-content state with icon and action slots. title string description string ",
+    "kind": "component",
+    "category": "Feedback"
   },
   {
     "title": "KvToastProvider",
     "path": "/components/toast-provider",
-    "text": "Feedback Provides useKvToast and renders timed, actionable status notifications. placement 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' defaultDuration number Tab — reach actions when present Enter / Space — invoke or dismiss"
+    "text": "Feedback Provides useKvToast and renders timed, actionable status notifications. placement 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left' defaultDuration number Tab — reach actions when present Enter / Space — invoke or dismiss",
+    "kind": "component",
+    "category": "Feedback"
   }
 ]

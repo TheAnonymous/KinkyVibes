@@ -1,13 +1,51 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test } from '@playwright/test'
 
-test('landing and component search navigate through public documentation', async ({ page }) => {
+test('desktop search supports shortcut, keyboard navigation, dismissal, and empty state', async ({ page }) => {
   await page.goto('/#/')
   await expect(page.getByRole('heading', { level: 1 })).toContainText('Pressure')
-  await page.getByRole('searchbox', { name: 'Search documentation' }).fill('combobox')
-  await expect(page.getByRole('link', { name: /KvCombobox/ })).toBeVisible()
-  await page.getByRole('link', { name: /KvCombobox/ }).click()
+  await page.keyboard.press('ControlOrMeta+k')
+  const search = page.getByRole('combobox', { name: 'Search documentation' })
+  await expect(search).toBeFocused()
+  await search.fill('combobox')
+  await expect(page.getByRole('option', { name: /KvCombobox/ })).toBeVisible()
+  await page.keyboard.press('Enter')
   await expect(page.getByRole('heading', { level: 1, name: 'KvCombobox' })).toBeVisible()
+
+  await search.fill('drawer')
+  await expect(page.getByRole('listbox', { name: 'Search results' })).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.getByRole('listbox', { name: 'Search results' })).toBeHidden()
+  await search.fill('definitely-not-a-kv-component')
+  await expect(page.getByText('No results', { exact: true })).toBeVisible()
+  await expect(page.getByText('0 results found.', { exact: true })).toBeAttached()
+  await page.getByRole('heading', { level: 1, name: 'KvCombobox' }).click()
+  await expect(page.getByRole('listbox', { name: 'Search results' })).toBeHidden()
+})
+
+test('mobile search opens from a compact trigger and follows arrow and Enter keys', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto('/#/')
+  const trigger = page.getByRole('button', { name: 'Search documentation' })
+  await trigger.click()
+  const dialog = page.getByRole('dialog', { name: 'Search documentation' })
+  await expect(dialog).toBeVisible()
+  const search = dialog.getByRole('combobox', { name: 'Search documentation' })
+  await expect(search).toBeFocused()
+  await search.fill('installation')
+  await page.keyboard.press('ArrowDown')
+  await page.keyboard.press('ArrowUp')
+  await page.keyboard.press('Enter')
+  await expect(page.getByRole('heading', { level: 1, name: 'Installation' })).toBeVisible()
+  await expect(dialog).toBeHidden()
+})
+
+test('search exposes a recoverable fetch error state', async ({ page }) => {
+  await page.route('**/search-index.json', (route) => route.fulfill({ status: 503, body: 'unavailable' }))
+  await page.goto('/#/')
+  await page.getByRole('combobox', { name: 'Search documentation' }).fill('button')
+  await expect(page.getByRole('alert')).toContainText('Search offline')
+  await expect(page.getByRole('alert')).toContainText('navigating from the menu')
 })
 
 test('showcase assets load and every embedded component remains interactive', async ({ page }) => {
@@ -103,17 +141,104 @@ test('editorial pages stay within the compact viewport', async ({ page }) => {
   }
 })
 
-test('responsive navigation opens without horizontal page overflow', async ({ page }) => {
+test('responsive drawer traps focus, closes through every path, restores focus, and locks scroll', async ({ page }) => {
   await page.setViewportSize({ width: 375, height: 812 })
   await page.goto('/#/components')
   const menu = page.getByRole('button', { name: 'Menu' })
   await expect(menu).toBeVisible()
   await menu.click()
-  await expect(page.getByRole('navigation', { name: 'Documentation' })).toBeVisible()
-  await page.getByRole('link', { name: 'Button', exact: true }).click()
+  const drawer = page.getByRole('dialog', { name: 'Documentation' })
+  await expect(drawer).toBeVisible()
+  await expect(page.locator('html')).toHaveCSS('overflow', 'hidden')
+  await expect(drawer.getByRole('button', { name: 'Close' })).toBeFocused()
+  await page.keyboard.press('Shift+Tab')
+  await expect(drawer.getByRole('link', { name: 'Accessibility' })).toBeFocused()
+  await page.keyboard.press('Tab')
+  await expect(drawer.getByRole('button', { name: 'Close' })).toBeFocused()
+  await page.keyboard.press('Escape')
+  await expect(drawer).toBeHidden()
+  await expect(menu).toBeFocused()
+  await expect(page.locator('html')).not.toHaveCSS('overflow', 'hidden')
+
+  await menu.click()
+  await page.locator('.kv-overlay--drawer').click({ position: { x: 370, y: 400 } })
+  await expect(drawer).toBeHidden()
+  await expect(menu).toBeFocused()
+
+  await menu.click()
+  await drawer.getByRole('link', { name: 'Button', exact: true }).click()
   await expect(page.getByRole('heading', { level: 1, name: 'KvButton' })).toBeVisible()
+  await expect(drawer).toBeHidden()
+  await expect(page.locator('html')).not.toHaveCSS('overflow', 'hidden')
   const width = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }))
   expect(width.scroll).toBeLessThanOrEqual(width.client + 1)
+})
+
+test('catalog category navigation tracks sections and details expose adjacent components', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto('/#/components')
+  await expect(page.getByRole('heading', { level: 2, name: 'Foundations 11 components' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 2, name: 'Feedback 7 components' })).toBeAttached()
+  const feedback = page.getByRole('button', { name: 'Feedback 7' })
+  await feedback.click()
+  await expect(feedback).toHaveAttribute('aria-current', 'true')
+  await expect.poll(() => page.locator('[data-category="Feedback"]').evaluate((element) => Math.round(element.getBoundingClientRect().top))).toBeLessThan(110)
+
+  await page.goto('/#/components/button')
+  await expect(page).toHaveTitle('KvButton — KinkyVibes UI')
+  const adjacent = page.getByRole('navigation', { name: 'Adjacent components' })
+  await expect(adjacent.getByRole('link', { name: /Previous component KvCode/ })).toBeVisible()
+  await adjacent.getByRole('link', { name: /Next component KvIconButton/ }).click()
+  await expect(page.getByRole('heading', { level: 1, name: 'KvIconButton' })).toBeVisible()
+})
+
+test('sidebar marks every public route and document titles follow navigation', async ({ page }) => {
+  const routes = [
+    ['/#/', 'Introduction', 'KinkyVibes UI — Industrial Vue components'],
+    ['/#/installation', 'Installation', 'Installation — KinkyVibes UI'],
+    ['/#/tokens', 'Token explorer', 'Token explorer — KinkyVibes UI'],
+    ['/#/components', 'All components', 'Components — KinkyVibes UI'],
+    ['/#/guides/ssr', 'SSR & Nuxt', 'SSR & Nuxt — KinkyVibes UI'],
+    ['/#/guides/customization', 'Customization', 'Customization — KinkyVibes UI'],
+    ['/#/accessibility', 'Accessibility', 'Accessibility — KinkyVibes UI'],
+  ] as const
+  for (const [path, link, title] of routes) {
+    await page.goto(path)
+    await expect(page.getByRole('navigation', { name: 'Documentation' }).getByRole('link', { name: link, exact: true })).toHaveAttribute('aria-current', 'page')
+    await expect(page).toHaveTitle(title)
+  }
+  await page.goto('/#/components/dialog')
+  await expect(page.getByRole('navigation', { name: 'Documentation' }).getByRole('link', { name: 'Dialog', exact: true })).toHaveAttribute('aria-current', 'page')
+  await expect(page).toHaveTitle('KvDialog — KinkyVibes UI')
+})
+
+for (const width of [320, 375]) {
+  test(`open mobile states do not cause horizontal overflow at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 812 })
+    await page.goto('/#/components')
+    const assertNoOverflow = async () => {
+      const dimensions = await page.evaluate(() => ({ scroll: document.documentElement.scrollWidth, client: document.documentElement.clientWidth }))
+      expect(dimensions.scroll).toBeLessThanOrEqual(dimensions.client + 1)
+    }
+    await assertNoOverflow()
+    await page.getByRole('button', { name: 'Search documentation' }).click()
+    await assertNoOverflow()
+    await page.keyboard.press('Escape')
+    await page.getByRole('button', { name: 'Menu' }).click()
+    await assertNoOverflow()
+  })
+}
+
+test('opened mobile search and drawer have no critical axe violations', async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.goto('/#/components')
+  await page.getByRole('button', { name: 'Search documentation' }).click()
+  let results = await new AxeBuilder({ page }).analyze()
+  expect(results.violations.filter((violation) => violation.impact === 'critical')).toEqual([])
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Menu' }).click()
+  results = await new AxeBuilder({ page }).analyze()
+  expect(results.violations.filter((violation) => violation.impact === 'critical')).toEqual([])
 })
 
 test('tabs and combobox implement documented keyboard movement', async ({ page }) => {

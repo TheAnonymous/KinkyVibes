@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch, type ComponentPublicInstance } from 'vue'
 import {
   KvBadge,
   KvButton,
   KvCard,
   KvCode,
   KvContainer,
+  KvDrawer,
   KvHeading,
   KvProgress,
   KvProvider,
@@ -14,24 +15,26 @@ import {
   KvText,
   KvVisuallyHidden,
 } from '@kinky-vibes/ui'
-import { KvSearchIcon } from '@kinky-vibes/ui/icons'
+import { KvChevronLeftIcon, KvChevronRightIcon, KvMenuIcon } from '@kinky-vibes/ui/icons'
 import ComponentPreview from './ComponentPreview'
+import DocsNavigation from './DocsNavigation.vue'
+import DocsSearch from './DocsSearch.vue'
 import EditorialVisual from './EditorialVisual.vue'
 import ShowcasePreview from './ShowcasePreview.vue'
 import { categories, componentDocs, type ComponentDoc } from './catalog'
 import { featureStories, pageVisuals, systemFieldImage } from './editorial'
 import { heroImage, showcaseScenes } from './showcase'
 
-interface SearchEntry { title: string; path: string; text: string }
-
 const route = ref('/')
 const navOpen = ref(false)
-const query = ref('')
-const searchEntries = ref<SearchEntry[]>([])
 const copied = ref(false)
+const navTrigger = ref<HTMLButtonElement | null>(null)
 const heroTab = ref('system')
 const heroMonitoring = ref(true)
 const heroProgress = ref(68)
+const activeCategory = ref(categories[0] ?? '')
+const categorySections = new Map<string, HTMLElement>()
+let categoryObserver: IntersectionObserver | undefined
 
 const heroTabs = [
   { id: 'system', label: 'System' },
@@ -42,29 +45,94 @@ const normalizeRoute = () => {
   route.value = window.location.hash.slice(1) || '/'
   navOpen.value = false
   window.scrollTo({ top: 0 })
+  document.title = pageTitle(route.value)
 }
 
-onMounted(async () => {
+onMounted(() => {
   normalizeRoute()
   window.addEventListener('hashchange', normalizeRoute)
-  try {
-    const response = await fetch(`${import.meta.env.BASE_URL}search-index.json`)
-    if (response.ok) searchEntries.value = await response.json()
-  } catch {
-    searchEntries.value = []
-  }
 })
-onBeforeUnmount(() => window.removeEventListener('hashchange', normalizeRoute))
+onBeforeUnmount(() => {
+  window.removeEventListener('hashchange', normalizeRoute)
+  categoryObserver?.disconnect()
+})
 
 const currentComponent = computed(() => {
   const match = route.value.match(/^\/components\/(.+)$/)
   return match ? componentDocs.find((entry) => entry.slug === match[1]) : undefined
 })
 
-const results = computed(() => {
-  const needle = query.value.trim().toLocaleLowerCase()
-  if (!needle) return []
-  return searchEntries.value.filter((entry) => `${entry.title} ${entry.text}`.toLocaleLowerCase().includes(needle)).slice(0, 8)
+const currentComponentIndex = computed(() => currentComponent.value ? componentDocs.indexOf(currentComponent.value) : -1)
+const previousComponent = computed(() => currentComponentIndex.value > 0 ? componentDocs[currentComponentIndex.value - 1] : undefined)
+const nextComponent = computed(() => currentComponentIndex.value >= 0 ? componentDocs[currentComponentIndex.value + 1] : undefined)
+
+const staticPageTitles: Record<string, string> = {
+  '/': 'KinkyVibes UI — Industrial Vue components',
+  '/installation': 'Installation — KinkyVibes UI',
+  '/tokens': 'Token explorer — KinkyVibes UI',
+  '/components': 'Components — KinkyVibes UI',
+  '/guides/ssr': 'SSR & Nuxt — KinkyVibes UI',
+  '/guides/customization': 'Customization — KinkyVibes UI',
+  '/accessibility': 'Accessibility — KinkyVibes UI',
+}
+
+const isKnownRoute = computed(() => Boolean(staticPageTitles[route.value] || currentComponent.value))
+
+function pageTitle(path: string) {
+  const match = path.match(/^\/components\/(.+)$/)
+  const component = match ? componentDocs.find((entry) => entry.slug === match[1]) : undefined
+  return component ? `${component.name} — KinkyVibes UI` : (staticPageTitles[path] ?? 'Page not found — KinkyVibes UI')
+}
+
+function categoryCount(category: string) {
+  return componentDocs.filter((entry) => entry.category === category).length
+}
+
+function categorySlug(category: string) {
+  return category.toLocaleLowerCase().replace(/\s*&\s*/g, '-').replace(/\s+/g, '-')
+}
+
+function setCategorySection(category: string, element: Element | ComponentPublicInstance | null) {
+  if (element instanceof HTMLElement) categorySections.set(category, element)
+  else categorySections.delete(category)
+}
+
+function initializeCategoryObserver() {
+  categoryObserver?.disconnect()
+  if (route.value !== '/components' || !('IntersectionObserver' in window)) return
+  categoryObserver = new IntersectionObserver((entries) => {
+    const visible = entries
+      .filter((entry) => entry.isIntersecting)
+      .sort((a, b) => b.intersectionRatio - a.intersectionRatio || a.boundingClientRect.top - b.boundingClientRect.top)
+    const category = visible[0]?.target.getAttribute('data-category')
+    if (category) activeCategory.value = category
+  }, { rootMargin: '-5rem 0px -55% 0px', threshold: [0, 0.1, 0.25, 0.5] })
+  categorySections.forEach((element) => categoryObserver?.observe(element))
+}
+
+function scrollToCategory(category: string) {
+  const section = categorySections.get(category)
+  if (!section) return
+  activeCategory.value = category
+  const top = section.getBoundingClientRect().top + window.scrollY - 80
+  const root = document.documentElement
+  const previousBehavior = root.style.scrollBehavior
+  root.style.scrollBehavior = 'auto'
+  window.scrollTo({ top, behavior: 'auto' })
+  window.requestAnimationFrame(() => { root.style.scrollBehavior = previousBehavior })
+}
+
+watch(route, async (path) => {
+  categoryObserver?.disconnect()
+  if (path !== '/components') return
+  activeCategory.value = categories[0] ?? ''
+  await nextTick()
+  initializeCategoryObserver()
+})
+
+watch(activeCategory, async (category) => {
+  await nextTick()
+  document.querySelector<HTMLElement>(`[data-category-button="${categorySlug(category)}"]`)?.scrollIntoView({ block: 'nearest', inline: 'center' })
 })
 
 const tokens = [
@@ -99,6 +167,10 @@ function goTo(path: string) {
 function advanceSequence() {
   heroProgress.value = heroProgress.value >= 92 ? 32 : heroProgress.value + 8
 }
+
+function restoreNavigationFocus() {
+  window.setTimeout(() => navTrigger.value?.focus(), 0)
+}
 </script>
 
 <template>
@@ -110,44 +182,20 @@ function advanceSequence() {
           <span class="docs-brand__mark" aria-hidden="true">KV</span>
           <span>KinkyVibes <small>UI / 0.1</small></span>
         </a>
-        <button class="docs-nav-toggle" type="button" :aria-expanded="navOpen" aria-controls="docs-navigation" @click="navOpen = !navOpen">
-          <span aria-hidden="true">☰</span> Menu
-        </button>
-        <div class="docs-search">
-          <KvSearchIcon :size="17" />
-          <label class="kv-visually-hidden" for="docs-search">Search documentation</label>
-          <input id="docs-search" v-model="query" type="search" placeholder="Search documentation" autocomplete="off" />
-          <div v-if="results.length" class="docs-search__results">
-            <a v-for="result in results" :key="result.path" :href="`#${result.path}`" @click="query = ''">
-              <strong>{{ result.title }}</strong>
-              <span>{{ result.text.slice(0, 80) }}</span>
-            </a>
-          </div>
-        </div>
+        <DocsSearch />
         <a class="docs-github" href="https://github.com/kinky-vibes/kinky-vibes" rel="noreferrer">GitHub</a>
+        <button ref="navTrigger" class="docs-nav-toggle" type="button" :aria-expanded="navOpen" aria-label="Menu" @click="navOpen = true">
+          <KvMenuIcon :size="20" aria-hidden="true" /><span>Menu</span>
+        </button>
       </header>
 
-      <aside id="docs-navigation" class="docs-sidebar" :class="{ 'is-open': navOpen }">
-        <nav aria-label="Documentation">
-          <div class="docs-nav-section">
-            <span class="docs-nav-label">Start</span>
-            <a href="#/" :aria-current="route === '/' ? 'page' : undefined">Introduction</a>
-            <a href="#/installation" :aria-current="route === '/installation' ? 'page' : undefined">Installation</a>
-            <a href="#/tokens" :aria-current="route === '/tokens' ? 'page' : undefined">Token explorer</a>
-            <a href="#/components" :aria-current="route === '/components' ? 'page' : undefined">All components</a>
-          </div>
-          <div v-for="category in categories" :key="category" class="docs-nav-section">
-            <span class="docs-nav-label">{{ category }}</span>
-            <a v-for="component in componentDocs.filter((entry) => entry.category === category)" :key="component.name" :href="componentHref(component)" :aria-current="currentComponent?.name === component.name ? 'page' : undefined">{{ component.name.replace('Kv', '') }}</a>
-          </div>
-          <div class="docs-nav-section">
-            <span class="docs-nav-label">Guides</span>
-            <a href="#/guides/ssr">SSR & Nuxt</a>
-            <a href="#/guides/customization">Customization</a>
-            <a href="#/accessibility">Accessibility</a>
-          </div>
-        </nav>
+      <aside class="docs-sidebar">
+        <DocsNavigation :route="route" />
       </aside>
+
+      <KvDrawer v-model:open="navOpen" title="Documentation" description="Navigate the KinkyVibes system." side="left" size="sm" @close="restoreNavigationFocus">
+        <DocsNavigation :route="route" @navigate="navOpen = false" />
+      </KvDrawer>
 
       <main id="main-content" class="docs-main" tabindex="-1">
         <template v-if="route === '/'">
@@ -280,9 +328,26 @@ createApp(App).use(KinkyVibes).mount('#app')</KvCode>
           <article class="docs-article docs-showcase-page">
             <KvHeading :level="1" eyebrow="Reference / 44">Components</KvHeading>
             <KvText size="lg" tone="muted">Neutral primitives for application structure, input, navigation, disclosure, overlays, and feedback.</KvText>
-            <section v-for="scene in showcaseScenes" :key="scene.category" class="docs-component-section" :data-showcase-scene="scene.slug">
+            <nav class="docs-category-nav" aria-label="Component categories">
+              <button
+                v-for="category in categories"
+                :key="category"
+                type="button"
+                :data-category-button="categorySlug(category)"
+                :aria-current="activeCategory === category ? 'true' : undefined"
+                @click="scrollToCategory(category)"
+              ><span>{{ category }}</span><small>{{ categoryCount(category) }}</small></button>
+            </nav>
+            <section
+              v-for="scene in showcaseScenes"
+              :key="scene.category"
+              :ref="(element) => setCategorySection(scene.category, element)"
+              class="docs-component-section"
+              :data-showcase-scene="scene.slug"
+              :data-category="scene.category"
+            >
               <div class="docs-component-section__heading">
-                <h2>{{ scene.category }}</h2>
+                <h2>{{ scene.category }} <small>{{ categoryCount(scene.category) }} components</small></h2>
                 <p><span>{{ scene.index }}</span>{{ scene.description }}</p>
               </div>
               <div class="docs-category-scene">
@@ -307,7 +372,8 @@ createApp(App).use(KinkyVibes).mount('#app')</KvCode>
               </div>
               <div class="docs-component-grid">
                 <a v-for="component in componentDocs.filter((entry) => entry.category === scene.category)" :key="component.name" :href="componentHref(component)">
-                  <strong>{{ component.name }}</strong><span>{{ component.description }}</span>
+                  <span class="docs-component-grid__index">{{ String(componentDocs.indexOf(component) + 1).padStart(2, '0') }}</span>
+                  <strong>{{ component.name }}</strong><span>{{ component.description }}</span><span class="docs-component-grid__action">View reference <KvChevronRightIcon :size="15" aria-hidden="true" /></span>
                 </a>
               </div>
             </section>
@@ -316,7 +382,7 @@ createApp(App).use(KinkyVibes).mount('#app')</KvCode>
 
         <KvContainer v-else-if="currentComponent" size="md">
           <article class="docs-article">
-            <nav class="docs-breadcrumb" aria-label="Breadcrumb"><a href="#/components">Components</a><span>/</span><span>{{ currentComponent.category }}</span></nav>
+            <nav class="docs-breadcrumb" aria-label="Breadcrumb"><a href="#/components">Components</a><span aria-hidden="true">/</span><span>{{ currentComponent.category }}</span><span aria-hidden="true">/</span><span aria-current="page">{{ currentComponent.name }}</span></nav>
             <KvHeading :level="1" :eyebrow="currentComponent.category">{{ currentComponent.name }}</KvHeading>
             <KvText size="lg" tone="muted">{{ currentComponent.description }}</KvText>
             <section class="docs-demo-section">
@@ -343,6 +409,11 @@ createApp(App).use(KinkyVibes).mount('#app')</KvCode>
               <h2>Keyboard</h2>
               <ul class="docs-keyboard"><li v-for="item in currentComponent.keyboard" :key="item">{{ item }}</li></ul>
             </section>
+            <nav class="docs-component-pagination" aria-label="Adjacent components">
+              <a v-if="previousComponent" :href="componentHref(previousComponent)"><KvChevronLeftIcon :size="18" aria-hidden="true" /><span><small>Previous component</small><strong>{{ previousComponent.name }}</strong></span></a>
+              <span v-else aria-hidden="true"></span>
+              <a v-if="nextComponent" :href="componentHref(nextComponent)"><span><small>Next component</small><strong>{{ nextComponent.name }}</strong></span><KvChevronRightIcon :size="18" aria-hidden="true" /></a>
+            </nav>
           </article>
         </KvContainer>
 
@@ -400,6 +471,17 @@ export default defineNuxtPlugin((nuxtApp) =&gt; {
         <KvContainer v-else size="sm">
           <article class="docs-not-found"><strong>404</strong><KvHeading>Route not found</KvHeading><a href="#/">Return to introduction</a></article>
         </KvContainer>
+
+        <section v-if="isKnownRoute" class="docs-end-cta" aria-labelledby="docs-end-cta-title">
+          <span>System / ready</span>
+          <div><h2 id="docs-end-cta-title">Build with pressure.</h2><p>Install the package or inspect every production-ready primitive.</p></div>
+          <div class="docs-end-cta__actions"><a href="#/installation">Install UI</a><a href="#/components">Browse components</a></div>
+        </section>
+        <footer class="docs-footer">
+          <span>@kinky-vibes/ui v0.1.0</span>
+          <span>Released under the <a href="https://github.com/kinky-vibes/kinky-vibes/blob/main/LICENSE" rel="noreferrer">MIT License</a></span>
+          <a href="https://github.com/kinky-vibes/kinky-vibes" rel="noreferrer">GitHub ↗</a>
+        </footer>
       </main>
     </div>
   </KvProvider>
