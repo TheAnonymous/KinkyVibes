@@ -8,6 +8,8 @@ const entries = [
     title: entry.name,
     path: `/components/${entry.slug}`,
     text: `${entry.category} ${entry.description} ${entry.props.map((prop) => `${prop.name} ${prop.type}`).join(' ')} ${(entry.keyboard ?? []).join(' ')}`,
+    kind: 'component' as const,
+    category: entry.category,
   })),
 ]
 
