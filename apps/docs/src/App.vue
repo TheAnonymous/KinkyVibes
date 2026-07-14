@@ -3,16 +3,22 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import {
   KvBadge,
   KvButton,
+  KvCard,
   KvCode,
   KvContainer,
   KvHeading,
+  KvProgress,
   KvProvider,
+  KvSwitch,
+  KvTabs,
   KvText,
   KvVisuallyHidden,
 } from '@kinky-vibes/ui'
 import { KvSearchIcon } from '@kinky-vibes/ui/icons'
 import ComponentPreview from './ComponentPreview'
+import ShowcasePreview from './ShowcasePreview.vue'
 import { categories, componentDocs, type ComponentDoc } from './catalog'
+import { heroImage, showcaseScenes } from './showcase'
 
 interface SearchEntry { title: string; path: string; text: string }
 
@@ -21,6 +27,14 @@ const navOpen = ref(false)
 const query = ref('')
 const searchEntries = ref<SearchEntry[]>([])
 const copied = ref(false)
+const heroTab = ref('system')
+const heroMonitoring = ref(true)
+const heroProgress = ref(68)
+
+const heroTabs = [
+  { id: 'system', label: 'System' },
+  { id: 'output', label: 'Output' },
+]
 
 const normalizeRoute = () => {
   route.value = window.location.hash.slice(1) || '/'
@@ -79,6 +93,10 @@ function componentHref(component: ComponentDoc) {
 function goTo(path: string) {
   window.location.hash = path
 }
+
+function advanceSequence() {
+  heroProgress.value = heroProgress.value >= 92 ? 32 : heroProgress.value + 8
+}
 </script>
 
 <template>
@@ -132,12 +150,49 @@ function goTo(path: string) {
       <main id="main-content" class="docs-main" tabindex="-1">
         <template v-if="route === '/'">
           <section class="docs-hero">
-            <KvBadge status="error" dot>Vue 3.5+ / TypeScript</KvBadge>
-            <h1>Pressure.<br /><span>Structure.</span><br />Signal.</h1>
-            <KvText size="lg" tone="muted">A single-theme Vue framework forged for dense, deliberate interfaces. No runtime UI dependencies. No decorative compromise.</KvText>
-            <div class="docs-hero__actions">
-              <KvButton @click="goTo('/installation')">Install package</KvButton>
-              <a class="docs-secondary-link" href="#/components">Explore 44 components →</a>
+            <div class="docs-hero__copy">
+              <KvBadge status="error" dot>Vue 3.5+ / TypeScript</KvBadge>
+              <h1>Pressure.<br /><span>Structure.</span><br />Signal.</h1>
+              <KvText size="lg" tone="muted">A single-theme Vue framework forged for dense, deliberate interfaces. No runtime UI dependencies. No decorative compromise.</KvText>
+              <div class="docs-hero__actions">
+                <KvButton @click="goTo('/installation')">Install package</KvButton>
+                <a class="docs-secondary-link" href="#/components">Explore 44 components →</a>
+              </div>
+            </div>
+            <div class="docs-hero__visual">
+              <img
+                class="docs-showcase-image docs-hero__image"
+                data-showcase-image="hero"
+                :src="heroImage.src"
+                :srcset="heroImage.srcset"
+                sizes="(max-width: 64rem) 100vw, 46vw"
+                :width="heroImage.width"
+                :height="heroImage.height"
+                alt=""
+                loading="eager"
+                decoding="async"
+                fetchpriority="high"
+              />
+              <KvCard class="docs-hero__control" padding="sm">
+                <template #header>
+                  <div class="docs-control-header">
+                    <span>Live control</span>
+                    <KvBadge status="success" dot>Online</KvBadge>
+                  </div>
+                </template>
+                <KvTabs v-model="heroTab" :items="heroTabs" label="Hero control channels">
+                  <template #default="{ item }">
+                    <div class="docs-control-panel">
+                      <span>{{ item.label }} channel / AX-17</span>
+                      <KvProgress :value="heroProgress" label="Sequence pressure" show-value />
+                      <div class="docs-control-panel__actions">
+                        <KvSwitch v-model="heroMonitoring" label="Monitoring" />
+                        <KvButton size="sm" @click="advanceSequence">Advance</KvButton>
+                      </div>
+                    </div>
+                  </template>
+                </KvTabs>
+              </KvCard>
             </div>
           </section>
           <section class="docs-stats" aria-label="Package characteristics">
@@ -191,13 +246,36 @@ createApp(App).use(KinkyVibes).mount('#app')</KvCode>
         </KvContainer>
 
         <KvContainer v-else-if="route === '/components'" size="lg">
-          <article class="docs-article">
+          <article class="docs-article docs-showcase-page">
             <KvHeading :level="1" eyebrow="Reference / 44">Components</KvHeading>
             <KvText size="lg" tone="muted">Neutral primitives for application structure, input, navigation, disclosure, overlays, and feedback.</KvText>
-            <section v-for="category in categories" :key="category" class="docs-component-section">
-              <h2>{{ category }}</h2>
+            <section v-for="scene in showcaseScenes" :key="scene.category" class="docs-component-section" :data-showcase-scene="scene.slug">
+              <div class="docs-component-section__heading">
+                <h2>{{ scene.category }}</h2>
+                <p><span>{{ scene.index }}</span>{{ scene.description }}</p>
+              </div>
+              <div class="docs-category-scene">
+                <img
+                  class="docs-showcase-image docs-category-scene__image"
+                  :data-showcase-image="scene.slug"
+                  :src="scene.image.src"
+                  :srcset="scene.image.srcset"
+                  sizes="(max-width: 64rem) 100vw, 60rem"
+                  :width="scene.image.width"
+                  :height="scene.image.height"
+                  alt=""
+                  loading="lazy"
+                  decoding="async"
+                />
+                <div class="docs-category-scene__preview">
+                  <div class="docs-demo-label"><span>Live example</span><span>{{ scene.preview }}</span></div>
+                  <div class="docs-category-scene__control">
+                    <ShowcasePreview :component="scene.preview" />
+                  </div>
+                </div>
+              </div>
               <div class="docs-component-grid">
-                <a v-for="component in componentDocs.filter((entry) => entry.category === category)" :key="component.name" :href="componentHref(component)">
+                <a v-for="component in componentDocs.filter((entry) => entry.category === scene.category)" :key="component.name" :href="componentHref(component)">
                   <strong>{{ component.name }}</strong><span>{{ component.description }}</span>
                 </a>
               </div>

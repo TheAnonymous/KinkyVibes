@@ -2,14 +2,38 @@ import { expect, test } from '@playwright/test'
 
 test.skip(({ browserName }) => browserName !== 'chromium', 'Visual baselines use Chromium for deterministic rasterization.')
 
+async function loadShowcaseImages(page: import('@playwright/test').Page) {
+  const images = page.locator('[data-showcase-image]')
+  for (const image of await images.all()) {
+    await image.scrollIntoViewIfNeeded()
+    await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth)).toBeGreaterThan(0)
+  }
+  await page.evaluate(() => window.scrollTo({ top: 0 }))
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBe(0)
+}
+
 test('landing is stable at desktop and compact widths', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/#/')
+  await loadShowcaseImages(page)
   await expect(page).toHaveScreenshot('landing-1440.png', { fullPage: true })
 
   await page.setViewportSize({ width: 375, height: 812 })
   await page.reload()
+  await loadShowcaseImages(page)
   await expect(page).toHaveScreenshot('landing-375.png', { fullPage: true })
+})
+
+test('component showcase is stable at desktop and compact widths', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
+  await page.goto('/#/components')
+  await loadShowcaseImages(page)
+  await expect(page).toHaveScreenshot('components-1440.png', { fullPage: true })
+
+  await page.setViewportSize({ width: 375, height: 812 })
+  await page.reload()
+  await loadShowcaseImages(page)
+  await expect(page).toHaveScreenshot('components-375.png', { fullPage: true })
 })
 
 test('button states and open overlay remain stable', async ({ page }) => {

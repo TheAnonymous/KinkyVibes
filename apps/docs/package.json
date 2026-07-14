@@ -6,6 +6,7 @@
   "scripts": {
     "predev": "npm run build -w @kinky-vibes/ui",
     "dev": "vite --host 0.0.0.0",
+    "prebuild": "node scripts/check-showcase-assets.mjs",
     "build": "tsx scripts/generate-search.ts && vite build",
     "preview": "vite preview --host 127.0.0.1 --port 4179",
     "typecheck": "vue-tsc -p tsconfig.json --noEmit"

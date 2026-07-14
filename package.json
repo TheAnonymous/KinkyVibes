@@ -16,6 +16,7 @@
   "scripts": {
     "build": "npm run build -w @kinky-vibes/ui && npm run build -w @kinky-vibes/docs",
     "build:ui": "npm run build -w @kinky-vibes/ui",
+    "check:assets": "node apps/docs/scripts/check-showcase-assets.mjs",
     "dev": "npm run dev -w @kinky-vibes/docs",
     "lint": "eslint . --max-warnings=0",
     "pretypecheck": "npm run build:ui",
@@ -27,7 +28,7 @@
     "test:pack": "node scripts/test-pack.mjs",
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots",
-    "check": "npm run lint && npm run typecheck && npm run test && npm run build && npm run test:pack",
+    "check": "npm run check:assets && npm run lint && npm run typecheck && npm run test && npm run build && npm run test:pack",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "changeset publish"
