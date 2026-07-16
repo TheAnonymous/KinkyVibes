@@ -36,6 +36,7 @@ const navTrigger = ref<HTMLButtonElement | null>(null)
 const heroTab = ref('system')
 const heroMonitoring = ref(true)
 const heroProgress = ref(68)
+const heroImpulse = ref(false)
 const activeCategory = ref(categories[0] ?? '')
 const activeSection = ref('')
 const scrollProgress = ref(0)
@@ -43,6 +44,7 @@ const routeEpoch = ref(0)
 const categorySections = new Map<string, HTMLElement>()
 let categoryObserver: IntersectionObserver | undefined
 let sectionObserver: IntersectionObserver | undefined
+let heroImpulseTimer: number | undefined
 
 const heroTabs = [
   { id: 'system', label: 'System' },
@@ -81,6 +83,7 @@ onBeforeUnmount(() => {
   window.removeEventListener('scroll', updateScrollProgress)
   categoryObserver?.disconnect()
   sectionObserver?.disconnect()
+  window.clearTimeout(heroImpulseTimer)
 })
 
 const currentComponent = computed(() => {
@@ -272,6 +275,12 @@ function goTo(path: string) {
 
 function advanceSequence() {
   heroProgress.value = heroProgress.value >= 92 ? 32 : heroProgress.value + 8
+  window.clearTimeout(heroImpulseTimer)
+  heroImpulse.value = false
+  window.requestAnimationFrame(() => {
+    heroImpulse.value = true
+    heroImpulseTimer = window.setTimeout(() => (heroImpulse.value = false), 360)
+  })
 }
 
 </script>
@@ -307,7 +316,11 @@ function advanceSequence() {
           <section class="docs-hero">
             <div class="docs-hero__copy">
               <KvBadge status="error" dot>Vue 3.5+ / TypeScript</KvBadge>
-              <h1>Pressure.<br /><span>Structure.</span><br />Signal.</h1>
+              <h1>
+                <span class="docs-hero__word">Pressure.</span>
+                <span class="docs-hero__word docs-hero__word--signal">Structure.</span>
+                <span class="docs-hero__word">Signal.</span>
+              </h1>
               <KvText size="lg" tone="muted">A single-theme Vue framework forged for dense, deliberate interfaces. No runtime UI dependencies. No decorative compromise.</KvText>
               <div class="docs-hero__actions">
                 <KvButton @click="goTo('/installation')">Install package</KvButton>
@@ -329,7 +342,7 @@ function advanceSequence() {
                 fetchpriority="high"
               />
               <span class="docs-image-coordinate" aria-hidden="true">FIELD / 59.91N · 10.75E</span>
-              <KvCard class="docs-hero__control" padding="sm">
+              <KvCard class="docs-hero__control" :class="{ 'is-advanced': heroImpulse }" padding="sm">
                 <template #header>
                   <div class="docs-control-header">
                     <span>Live control</span>

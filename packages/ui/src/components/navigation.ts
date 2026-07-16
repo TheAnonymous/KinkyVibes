@@ -55,11 +55,11 @@ export const KvTabs = defineComponent({
             }, item.label),
           ),
         ),
-        h(Transition, { name: 'kv-tab-motion', mode: 'out-in' }, () => active ? h('div', {
+        active ? h('div', {
           key: active.id,
           class: 'kv-tabs__panel', role: 'tabpanel', tabindex: 0,
           id: `${baseId.value}-panel-${active.id}`, 'aria-labelledby': `${baseId.value}-tab-${active.id}`,
-        }, slots[`panel-${active.id}`]?.({ item: active }) ?? slots.default?.({ item: active })) : null),
+        }, slots[`panel-${active.id}`]?.({ item: active }) ?? slots.default?.({ item: active })) : null,
       ])
     }
   },

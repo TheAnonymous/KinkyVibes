@@ -62,6 +62,8 @@ test('search exposes a recoverable fetch error state', async ({ page }) => {
 })
 
 test('showcase assets load and every embedded component remains interactive', async ({ page }) => {
+  test.setTimeout(60_000)
+  await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/#/')
   const hero = page.locator('[data-showcase-image="hero"]')
   await expect(hero).toHaveAttribute('loading', 'eager')
@@ -142,6 +144,36 @@ test('showcase assets load and every embedded component remains interactive', as
     await expect(image).toHaveAttribute('alt', '')
     await expect.poll(() => image.evaluate((element: HTMLImageElement) => element.complete && element.naturalWidth)).toBeGreaterThan(0)
   }
+})
+
+test('kinetic pressure states expose hover rails and confirm live actions', async ({ page }) => {
+  const consoleErrors: string[] = []
+  page.on('console', (message) => {
+    if (message.type() === 'error') consoleErrors.push(message.text())
+  })
+
+  await page.goto('/#/')
+  await expect(page).toHaveTitle('KinkyVibes UI — Industrial Vue components')
+  await expect(page.getByRole('heading', { level: 1, name: 'Pressure. Structure. Signal.' })).toBeVisible()
+
+  const install = page.getByRole('button', { name: 'Install package' })
+  await page.locator('.docs-hero__actions').evaluate(async (element) => {
+    await Promise.all(element.getAnimations().map((animation) => animation.finished))
+  })
+  await expect.poll(() => install.evaluate((element) => getComputedStyle(element, '::after').transform)).toBe('matrix(0, 0, 0, 1, 0, 0)')
+  await install.hover()
+  await expect.poll(() => install.evaluate((element) => getComputedStyle(element, '::after').transform)).toBe('matrix(1, 0, 0, 1, 0, 0)')
+
+  const heroControl = page.locator('.docs-hero__control')
+  await page.getByRole('button', { name: 'Advance' }).click()
+  await expect(page.getByRole('progressbar', { name: 'Sequence pressure' })).toHaveAttribute('aria-valuenow', '76')
+  await expect.poll(() => heroControl.evaluate((element) => getComputedStyle(element).animationName), { timeout: 1_000 }).toBe('docs-control-confirm')
+
+  await page.goto('/#/components')
+  const foundations = page.getByRole('button', { name: 'Foundations 11' })
+  await foundations.focus()
+  await expect.poll(() => foundations.evaluate((element) => getComputedStyle(element, '::after').transform)).toBe('matrix(1, 0, 0, 1, 0, 0)')
+  expect(consoleErrors).toEqual([])
 })
 
 test('editorial pages stay within the compact viewport', async ({ page }) => {
@@ -226,7 +258,7 @@ test('section deep links survive reload and history while the rail tracks withou
 
   await page.goto('/#/components/button')
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
-  await expect(rail.getByRole('link', { name: /API/ })).toHaveAttribute('aria-current', 'location')
+  await expect(rail.getByRole('link', { name: /Keyboard/ })).toHaveAttribute('aria-current', 'location')
   await expect(page).toHaveURL(/#\/components\/button$/)
 
   await page.goto('/#/components/button?section=unknown')
@@ -250,12 +282,12 @@ test('section headings copy their compatible hash URLs with visible and live fee
 test('token explorer filters the generated inventory, reports empty state, and copies declarations', async ({ page, browserName }) => {
   if (browserName === 'chromium') await page.context().grantPermissions(['clipboard-read', 'clipboard-write'])
   await page.goto('/#/tokens?section=explorer')
-  await expect(page.getByText('68 of 68 tokens', { exact: true })).toBeVisible()
+  await expect(page.getByText('77 of 77 tokens', { exact: true })).toBeVisible()
   const filter = page.getByRole('searchbox', { name: 'Filter tokens' })
   await filter.fill('duration')
-  await expect(page.locator('.docs-token')).toHaveCount(3)
+  await expect(page.locator('.docs-token')).toHaveCount(5)
   await page.getByRole('button', { name: 'Motion', exact: true }).click()
-  await expect(page.locator('.docs-token')).toHaveCount(3)
+  await expect(page.locator('.docs-token')).toHaveCount(5)
   await filter.fill('not-a-token')
   await expect(page.getByText('No matching tokens', { exact: true })).toBeVisible()
   await page.getByRole('button', { name: 'Reset filters' }).click()
