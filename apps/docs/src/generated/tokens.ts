@@ -188,6 +188,12 @@ export const tokenInventory: readonly TokenRecord[] = [
     "preview": "type"
   },
   {
+    "name": "--kv-font-size-label",
+    "value": "0.625rem",
+    "group": "Typography",
+    "preview": "type"
+  },
+  {
     "name": "--kv-font-size-sm",
     "value": "0.8125rem",
     "group": "Typography",
@@ -224,8 +230,20 @@ export const tokenInventory: readonly TokenRecord[] = [
     "preview": "type"
   },
   {
+    "name": "--kv-line-height-ui",
+    "value": "1.1",
+    "group": "Typography",
+    "preview": "type"
+  },
+  {
     "name": "--kv-line-height-body",
     "value": "1.48",
+    "group": "Typography",
+    "preview": "type"
+  },
+  {
+    "name": "--kv-letter-body",
+    "value": "0.008em",
     "group": "Typography",
     "preview": "type"
   },
@@ -368,6 +386,12 @@ export const tokenInventory: readonly TokenRecord[] = [
     "preview": "value"
   },
   {
+    "name": "--kv-duration-instant",
+    "value": "60ms",
+    "group": "Motion",
+    "preview": "motion"
+  },
+  {
     "name": "--kv-duration-fast",
     "value": "90ms",
     "group": "Motion",
@@ -382,6 +406,12 @@ export const tokenInventory: readonly TokenRecord[] = [
   {
     "name": "--kv-duration-slow",
     "value": "240ms",
+    "group": "Motion",
+    "preview": "motion"
+  },
+  {
+    "name": "--kv-duration-deliberate",
+    "value": "360ms",
     "group": "Motion",
     "preview": "motion"
   },
@@ -404,8 +434,32 @@ export const tokenInventory: readonly TokenRecord[] = [
     "preview": "motion"
   },
   {
+    "name": "--kv-ease-press",
+    "value": "cubic-bezier(0.4, 0, 1, 1)",
+    "group": "Motion",
+    "preview": "motion"
+  },
+  {
+    "name": "--kv-motion-nudge",
+    "value": "2px",
+    "group": "Motion",
+    "preview": "motion"
+  },
+  {
     "name": "--kv-motion-shift",
     "value": "0.375rem",
+    "group": "Motion",
+    "preview": "motion"
+  },
+  {
+    "name": "--kv-motion-travel",
+    "value": "0.75rem",
+    "group": "Motion",
+    "preview": "motion"
+  },
+  {
+    "name": "--kv-motion-stagger",
+    "value": "45ms",
     "group": "Motion",
     "preview": "motion"
   },

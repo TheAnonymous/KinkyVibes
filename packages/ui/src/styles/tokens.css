@@ -31,13 +31,16 @@
   --kv-font-display-weight: 820;
   --kv-font-display-width: 58;
   --kv-font-size-xs: 0.6875rem;
+  --kv-font-size-label: 0.625rem;
   --kv-font-size-sm: 0.8125rem;
   --kv-font-size-md: 0.9375rem;
   --kv-font-size-lg: 1.125rem;
   --kv-font-size-xl: 1.5rem;
   --kv-font-size-2xl: clamp(2rem, 5vw, 3.75rem);
   --kv-line-height-tight: 0.82;
+  --kv-line-height-ui: 1.1;
   --kv-line-height-body: 1.48;
+  --kv-letter-body: 0.008em;
   --kv-letter-display: -0.018em;
   --kv-letter-label: 0.135em;
 
@@ -63,13 +66,19 @@
   --kv-z-dropdown: 900;
   --kv-z-overlay: 1000;
   --kv-z-toast: 1100;
+  --kv-duration-instant: 60ms;
   --kv-duration-fast: 90ms;
   --kv-duration-normal: 160ms;
   --kv-duration-slow: 240ms;
+  --kv-duration-deliberate: 360ms;
   --kv-ease-mechanical: cubic-bezier(0.2, 0, 0, 1);
   --kv-ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
   --kv-ease-exit: cubic-bezier(0.7, 0, 0.84, 0);
+  --kv-ease-press: cubic-bezier(0.4, 0, 1, 1);
+  --kv-motion-nudge: 2px;
   --kv-motion-shift: 0.375rem;
+  --kv-motion-travel: 0.75rem;
+  --kv-motion-stagger: 45ms;
   --kv-container-sm: 42rem;
   --kv-container-md: 64rem;
   --kv-container-lg: 80rem;
